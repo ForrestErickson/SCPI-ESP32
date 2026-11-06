@@ -91,7 +91,7 @@ int main() {
     assert(heartbeat.enabled());
     assert(led.on);
     clock.now = 2500;
-    heartbeat.service(clock.now); // active period is still 4 s? adopted at enable
+    heartbeat.service(clock.now); // active period is 4 s, adopted at enable
     assert(led.on);
     engine.processScpiMessage("HEART:PER 8");
     assert(heartbeat.periodMilliseconds() == 8000);
@@ -108,9 +108,9 @@ int main() {
     engine.processScpiMessage("HEART:DUTY 50");
     assert(heartbeat.dutyCyclePercent() == 50);
     assert(led.on);
-    heartbeat.service(8099);
+    heartbeat.service(6099);
     assert(led.on);
-    heartbeat.service(8100);
+    heartbeat.service(6100);
     assert(!led.on);
     engine.processScpiMessage("HEART:DUTY?");
     assert(responses.response == "50");
