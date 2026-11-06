@@ -196,3 +196,18 @@ A clause-focused review of SCPI-99 Volume 1 §§6.2.1–6.2.4 has been recorded 
 - Common-command headers remain distinct from instrument-control headers and must not inherit subsystem-tree traversal state.
 
 The new document provides requirement IDs and concrete positive, negative, boundary, and interaction test ideas. Message termination/framing and full IEEE grammar remain deferred pending a separate review. The detailed review does not mark any requirement implemented or tested.
+
+
+## 11. Message termination and transport framing — 2026-11-06
+
+The next detailed review is recorded in [Message Termination and Framing Requirements](message-termination-and-framing.md).
+
+The project will accommodate four practical UART input cases:
+- LF as the SCPI newline terminator.
+- CR-LF as one accepted compatibility terminator.
+- CR alone as an explicitly documented project compatibility extension.
+- No terminator, optionally completed by a configurable inter-character inactivity timeout.
+
+The timeout is a transport framing convenience, not a SCPI message terminator. It can split a slowly transmitted command if configured too aggressively, and therefore belongs in the UART/serial adapter rather than the generic SCPI parser. TCP is also a byte stream; sender write boundaries are not message boundaries.
+
+The review separates input termination from response termination and adds testable requirements for CR-LF split across receive calls, timeout boundaries, buffer overflow/recovery, and transport/parser separation. Exact normative IEEE 488.2 input and response framing provisions remain to be checked against the complete document. No implementation is claimed.
