@@ -59,6 +59,8 @@ int main() {
            "! Amused Scientist,SCPI-ESP32,NOT SET,NOT SET");
     assert(errors.empty());
 
+    scpi::ScpiError error;
+
     engine.processScpiMessage("*IDN");
     assert(errors.pop(error));
     assert(error.code == -108);
@@ -68,7 +70,6 @@ int main() {
     assert(error.code == -108);
 
     engine.processScpiMessage("NOPE?");
-    scpi::ScpiError error;
     assert(errors.pop(error));
     assert(error.code == -113);
 
