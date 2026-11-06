@@ -41,7 +41,15 @@ A command handler should receive only the parsed request context and the applica
 
 A transport moves bytes and determines when a complete message is ready. The transport/application boundary supplies complete messages to the engine and carries engine responses back to the controller.
 
-A single serial read or TCP read is not necessarily one complete SCPI message. TCP is a byte stream; message boundaries are established by `transport::MessageFramer` using these project rules:\n\n- LF terminates a message.\n- CRLF terminates a message and is treated as one terminator.\n- CR alone does not terminate a message; a CR not followed by LF is retained as message data.\n- An optional inactivity timeout can terminate a message when no terminator is sent; it is disabled by default.\n- Empty messages are not dispatched. Oversized messages are reported and discarded through the next boundary.\n\nThe current default maximum message size is 256 bytes.
+A single serial read or TCP read is not necessarily one complete SCPI message. TCP is a byte stream; message boundaries are established by `transport::MessageFramer` using these project rules:
+
+- LF terminates a message.
+- CRLF terminates a message and is treated as one terminator.
+- CR alone does not terminate a message; a CR not followed by LF is retained as message data.
+- An optional inactivity timeout can terminate a message when no terminator is sent; it is disabled by default.
+- Empty messages are not dispatched. Oversized messages are reported and discarded through the next boundary.
+
+The current default maximum message size is 256 bytes.
 
 For the first host tests, a mock transport or direct message feeder is sufficient. The initial physical transport can be selected later.
 
@@ -170,10 +178,11 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 ## 10. First implementation order
 
-1. Implement and host-test the generic engine boundary with a simple test command.
-2. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
-3. Register the HEARTBEAT SCPI command module with the engine.
-4. Test command-to-service behavior and query responses on the host.
-5. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
+1. Implement and host-test the message framer and the engine entry-point/transport bridge. **The code and host test sources are now in place; execution remains to be verified in a working build environment.**
+2. Implement the generic parser, command registry, and dispatcher with a small test command.
+3. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
+4. Register the HEARTBEAT SCPI command module with the engine.
+5. Test command-to-service behavior and query responses on the host.
+6. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
 
 This order tests each boundary independently before combining them on hardware.
