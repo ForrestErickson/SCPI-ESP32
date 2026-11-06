@@ -182,3 +182,17 @@ The best-supported working baseline at this stage is:
 The approved working references are SCPI-99 (1999.0) and the IEEE 488.2-1992 edition cited by SCPI-99. The project will also investigate IEEE/IEC 60488-2-2004. Approval of the working baseline does not assume that the 2004 publication is technically equivalent or that it replaces the 1992 reference. Compare their scope, forewords, normative references, and relevant technical clauses; record any differences that affect the project before making a final determination about that relationship.
 
 For the project, the practical next action is to review the complete SCPI-99 set and the available IEEE/IEC 60488-2-2004 text, then produce a clause-level applicability map. Until that work is complete, the existing compliance matrix remains provisional.
+
+
+## 10. Detailed program-message and header review — 2026-11-06
+
+A clause-focused review of SCPI-99 Volume 1 §§6.2.1–6.2.4 has been recorded in [Program-Message and Header Requirements](program-message-and-header-requirements.md). Important precision added by that review:
+
+- Compound-message traversal is specifically defined: the first command header is root-referenced; each subsequent command header is referenced to the same tree level as the preceding command header. A leading colon explicitly starts from the root.
+- SCPI §6.2.4 says not to implement the enhanced tree-walking implementation described in IEEE 488.2 Annex A.1.2. This is a significant parser rule, not merely a stylistic preference.
+- Default nodes must not silently alter the parser's retained header path.
+- Query behavior is not an absolute no-side-effects rule: SCPI §6.2.3 states that ordinary queries do not change settings/couplings, but identifies the MEASurement subsystem as an exception where measurement may change settings.
+- Numeric suffixes are part of the command-header model. Where multiple identical capabilities are implemented, omitted suffix means capability 1; a single-capability instrument need not accept a suffix.
+- Common-command headers remain distinct from instrument-control headers and must not inherit subsystem-tree traversal state.
+
+The new document provides requirement IDs and concrete positive, negative, boundary, and interaction test ideas. Message termination/framing and full IEEE grammar remain deferred pending a separate review. The detailed review does not mark any requirement implemented or tested.
