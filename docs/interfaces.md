@@ -40,7 +40,7 @@ These interfaces are independent of Arduino, ESP32, and any particular transport
 
 The initial `scpi::CommandRegistry` stores registered long-form command paths and associates each with a function-pointer handler and optional application context pointer. Uppercase letters in a registration define the minimum short form (for example, `MEASure:VOLTage` accepts `MEAS:VOLT`); matching is case-insensitive and each path component is resolved independently. `scpi::CommandRequest` carries the parsed command path, query flag, and parameter text. The handler signature is `void`: it receives the application context, request, `ErrorQueue`, and `ResponseSink`. It reports errors by adding entries to the queue and emits query output through the sink. The registry's `dispatch()` return value means only that a matching handler was found and invoked; it is not a success/failure result for command execution. 
 
-The initial `scpi::Parser` separates one subsystem command header, an optional query marker, and the remaining parameter text. It trims surrounding whitespace and rejects malformed headers. It intentionally does not parse parameter grammar. The first slice accepts one command unit per message; semicolon-separated units and common commands beyond the initial `*IDN?` support are not yet supported. Command-tree defaults and full SCPI syntax remain future work; do not treat this subset as a complete SCPI implementation. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
+The initial `scpi::Parser` separates one command header, an optional query marker, and the remaining parameter text. It trims surrounding whitespace and rejects malformed headers. It intentionally does not parse parameter grammar. The first slice accepts one command unit per message; it supports subsystem commands and the common command `*IDN?`, but not semicolon-separated units or the broader common-command set. Command-tree defaults and full SCPI syntax remain future work; do not treat this subset as a complete SCPI implementation. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
 
 ## 3. Parser and command registry\n\nThe parser currently recognizes one subsystem command unit per message. It separates the command header from parameter text at the first whitespace, recognizes a trailing query marker, and rejects malformed headers. It does not yet interpret parameter values. The registry resolves each colon-separated keyword using the mandatory uppercase prefix and optional lowercase suffix shown in the registered long form. This is a deliberately limited first subset: additional common commands, semicolon-separated command units, command-tree defaults, and detailed parameter grammar remain to be implemented.\n\n## 4. Transport boundary
 
@@ -172,9 +172,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 ## 11. Decisions still open
 
-- How the parser represents command headers, parameters, and message units internally.
 - How SCPI short/long keyword forms and command-tree path rules are resolved before registry dispatch.
-- How the parser represents command headers, parameters, and message units internally.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
 - Period numeric representation, minimum/maximum values, and resolution.
 - Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
