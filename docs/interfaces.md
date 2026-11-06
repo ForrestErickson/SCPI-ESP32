@@ -12,7 +12,7 @@ This document defines the responsibilities and boundaries for the first host-tes
 4. When the main loop begins running, the application enables and begins servicing HEARTBEAT.
 5. The application main loop regularly services both the SCPI input path and the HEARTBEAT service.
 
-The transport receives bytes and identifies complete SCPI program messages according to the framing rules below. `transport::FramedInput` forwards each complete message through the transport-independent `scpi::EngineInterface::processProgramMessage()` entry point. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler. A handler may update application-service settings or return query data. The engine sends responses through an output/response interface.
+The transport receives bytes and identifies complete SCPI program messages according to the framing rules below. `transport::FramedInput` forwards each complete message through the transport-independent `scpi::EngineInterface::processScpiMessage()` entry point. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler. A handler may update application-service settings or return query data. The engine sends responses through an output/response interface.
 
 The engine does not operate GPIO. The HEARTBEAT service does not parse SCPI. The GPIO adapter does not know SCPI command names.
 
@@ -26,7 +26,7 @@ The engine should not include Arduino or ESP32 headers; know about GPIO pins, LE
 
 ### Conceptual interface
 
-The initial C++ entry point is `scpi::EngineInterface::processProgramMessage(const std::string&)`. The transport calls it once for each complete, non-empty program message. The full engine will additionally need equivalents of these operations:
+The initial C++ entry point is `scpi::EngineInterface::processScpiMessage(const std::string&)`. The transport calls it once for each complete, non-empty program message. The full engine will additionally need equivalents of these operations:
 
 - Register a command path and its handler.
 - Submit one complete SCPI program message for processing.
