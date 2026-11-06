@@ -46,9 +46,7 @@ The implementation strategy (for example, bounded token views, tables, or anothe
 
 An instrument module owns instrument-specific command families, state, parameter constraints, and handler behavior. It registers its commands with the generic engine through a defined interface.
 
-The initial module will be **HEARTBEAT**, a small utility that drives a status LED to indicate that the application's main loop is continuing to execute.
-
-The generic engine should not depend on the HEARTBEAT module. Other instrument modules should be able to use the same engine without including heartbeat code.
+The **HEARTBEAT** is better treated as a reusable application-support service than as part of the generic SCPI engine. An instrument application may include this service and register its HEARTBEAT command family with the engine. This allows the same heartbeat behavior to be used across different instruments without making it a dependency of the generic parser or dispatcher.
 
 ### 5. Hardware configuration and driver boundary
 
@@ -72,7 +70,7 @@ Use rollover-safe elapsed-time calculations. The achievable blink timing depends
 
 ## HEARTBEAT behavior proposal
 
-The first version should support:
+The reusable HEARTBEAT service should be usable by different instrument applications. Its first implementation should support:
 
 - Enable/disable of blinking.
 - A configurable blink frequency, expressed in hertz.
@@ -109,7 +107,7 @@ Build a minimal vertical slice:
 
 1. Compile the generic engine on a desktop host.
 2. Feed it a command through a mock transport.
-3. Parse and dispatch a HEARTBEAT command to the instrument module.
+3. Parse and dispatch a HEARTBEAT command registered by a small example application module.
 4. Verify parameter validation and query responses.
 5. Verify the nonblocking heartbeat state/timing logic with host tests.
 6. Integrate the GPIO adapter and main-loop service on a selected ESP32 board.
