@@ -259,7 +259,8 @@ transport is implemented yet.
 Install this repository as an Arduino library (for example, clone it into
 the Arduino libraries directory as `SCPI-ESP32`), then open
 `examples/esp32_scpi/esp32_scpi.ino` from the Arduino IDE. Select a compatible
-ESP32 board and its serial port before compiling. The sketch has not
-yet been cross-compiled or run on a physical ESP32. The first hardware test
-should verify setup LED behavior, the heartbeat cadence, and the response to
-`*IDN?\n` before exercising the remaining HEARTBEAT commands.
+ESP32 board and its serial port before compiling. The sketch is configured for PlatformIO's `esp32dev` target, and the GitHub
+Actions workflow now includes both host tests and an ESP32 cross-compile. A
+successful build has not yet been observed. The first hardware test should
+verify setup LED behavior, heartbeat cadence, and `*IDN?` using CR, LF, CRLF,
+and no terminator (which should dispatch after the 1,000 ms inactivity timeout).
