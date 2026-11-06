@@ -38,7 +38,9 @@ When the error queue is full, existing entries are preserved. Further errors are
 
 These interfaces are independent of Arduino, ESP32, and any particular transport. Host tests can use a small fake response sink to capture output without a serial port.
 
-The initial `scpi::CommandRegistry` stores exact command paths and associates each with a function-pointer handler and optional application context pointer. `scpi::CommandRequest` carries the parsed command path, query flag, and parameter text. The handler signature is `void`: it receives the application context, request, `ErrorQueue`, and `ResponseSink`. It reports errors by adding entries to the queue and emits query output through the sink. The registry's `dispatch()` return value means only that a matching handler was found and invoked; it is not a success/failure result for command execution.\n\nRegistry matching is case-insensitive but currently exact. It does not yet implement SCPI short/long keyword abbreviation, command-tree defaults, semicolon-separated message units, or parameter grammar. Those belong in the parser/standards work; do not treat this initial registry as a complete SCPI resolver. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
+The initial `scpi::CommandRegistry` stores exact command paths and associates each with a function-pointer handler and optional application context pointer. `scpi::CommandRequest` carries the parsed command path, query flag, and parameter text. The handler signature is `void`: it receives the application context, request, `ErrorQueue`, and `ResponseSink`. It reports errors by adding entries to the queue and emits query output through the sink. The registry's `dispatch()` return value means only that a matching handler was found and invoked; it is not a success/failure result for command execution. 
+
+Registry matching is case-insensitive but currently exact. It does not yet implement SCPI short/long keyword abbreviation, command-tree defaults, semicolon-separated message units, or parameter grammar. Those belong in the parser/standards work; do not treat this initial registry as a complete SCPI resolver. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
 
 ## 3. Transport boundary
 
@@ -170,13 +172,13 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 ## 9. Decisions still open
 
-- Whether handlers use function pointers, callbacks, interfaces, or another registration mechanism.
-- The command-handler registration and request-context API.
+- How the parser represents command headers, parameters, and message units internally.
+- How SCPI short/long keyword forms and command-tree path rules are resolved before registry dispatch.
 - How the parser represents command headers, parameters, and message units internally.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
 - Period numeric representation, minimum/maximum values, and resolution.
 - Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
-- The first ESP32 board and its actual onboard LED pin/polarity.
+- Confirm the exact ESP32 DevKit V1 board revision and onboard LED polarity; the user reports an ESP32-WROOM module and GPIO 2 LED.
 - The first physical transport and host build/test framework.
 
 ## 10. First implementation order
