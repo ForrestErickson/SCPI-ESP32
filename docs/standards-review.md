@@ -1,6 +1,6 @@
 # SCPI Standards Review — Initial Findings
 
-**Status:** Research notes and proposed decisions for review; not a compliance declaration.
+**Status:** Working research notes; not a compliance declaration. The project goal of eventual SCPI conformance, developed incrementally with every implemented feature tested, has been approved.
 
 ## 1. Reference documents
 
@@ -115,11 +115,11 @@ The following is a proposed staged implementation scope, not a claim of full SCP
 - Every standardized SCPI command subsystem or instrument class.
 - Full compliance with all SCPI 1999.0 and IEEE 488.2 requirements.
 
-These exclusions must remain visible in project documentation. If the project later elects to claim SCPI conformance, the required features cannot simply remain excluded.
+These exclusions are temporary staging boundaries, not permanent exclusions from the conformance goal. Each feature added must have tests. The project must not claim full conformance until the applicable requirements have been implemented and verified.
 
 ## 6. Decisions still needed
 
-1. Select the target SCPI and IEEE 488.2 editions, including whether the project's goal is a useful SCPI-style subset or eventual formal conformance.
+1. Select and document the target SCPI and IEEE 488.2 editions. The project goal is settled: eventual conformance, developed incrementally, with every implemented feature tested.
 2. Review the complete SCPI 1999.0 Command Reference to identify the required SCPI command families and any naming collision relevant to HEARTBEAT.
 3. Decide whether the initial parser milestone includes all common-command parsing and execution or only the message/header machinery needed to grow toward that support.
 4. Define the initial message termination/framing contract independently of the physical transport.
@@ -136,3 +136,20 @@ These exclusions must remain visible in project documentation. If the project la
 - IEEE 488.2-1992 catalogue record: https://standards.ieee.org/ieee/488.2/718/
 
 These notes are a working review. The official standards remain the controlling references, and interpretations should be checked against the complete applicable documents.
+
+
+## 8. Approved project conformance strategy
+
+**Decision:** The project will pursue eventual SCPI conformance, developed incrementally, with every implemented feature tested.
+
+Consequences:
+
+- Build the implementation in small, reviewable stages rather than attempting the entire standards set at once.
+- Maintain a traceable checklist of applicable SCPI and IEEE 488.2 requirements.
+- Add tests with each feature, including positive, negative, boundary, and interaction cases where applicable.
+- Record implementation status for each requirement: not started, in progress, implemented and tested, or not applicable with rationale.
+- Document temporary omissions and known deviations explicitly.
+- Do not claim full SCPI conformance until all applicable requirements for the selected standards editions have been implemented and verified.
+- Revisit the target editions before freezing the compliance checklist; SCPI 1999.0 Volume 1 and IEEE 488.2-1992 are the initial research references, not yet a final edition-selection decision.
+
+The first practical deliverable following this decision should be a requirement-to-test compliance matrix, followed by a staged implementation plan that starts with message parsing and command-tree behavior and grows toward the required common commands, status model, and other applicable SCPI features.
