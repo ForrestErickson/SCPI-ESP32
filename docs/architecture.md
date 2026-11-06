@@ -20,7 +20,7 @@ Initial architecture proposal for review. This document establishes the major so
 
 A transport moves incoming and outgoing bytes. Initial candidates include USB/serial, UART, and Wi-Fi TCP; the first implementation's transport is still to be selected.
 
-The transport must not interpret SCPI command meaning. The design must explicitly settle message framing and termination, including how a transport presents complete SCPI program messages to the engine. TCP in particular must not assume that one network read equals one complete message.
+The transport must not interpret SCPI command meaning. `MessageFramer` establishes complete-message boundaries: LF and CRLF terminate a message; CR alone does not. An optional inactivity timeout is disabled by default. TCP in particular must not assume that one network read equals one complete message. `FramedInput` forwards each completed message to the transport-independent `EngineInterface`.
 
 ### 2. SCPI engine
 
