@@ -43,7 +43,10 @@ int main() {
 
     // Matching ignores case but does not yet accept abbreviated keywords.
     assert(registry.find("measure:voltage") != 0);
-    assert(registry.find("MEASure:VOLT") == 0);
+    assert(registry.find("MEAS:VOLT") != 0);
+    assert(registry.find("meas:volt") != 0);
+    assert(registry.find("MEA:VOLT") == 0);
+    assert(registry.find("MEAS:VOL") == 0);
     assert(!registry.registerCommand("measure:voltage", testHandler, &state));
 
     scpi::CommandRequest set_request("MEASure:VOLTage", false, "12.5");
