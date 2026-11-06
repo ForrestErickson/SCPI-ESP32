@@ -1,4 +1,4 @@
-# Initial Software Interface Proposal
+# Software Interface Contract
 
 **Status:** Initial implementation contract. The message-framing component, engine entry-point interface, and framed-input adapter are implemented and host-test sources are provided; the parser and dispatcher remain future work.
 
@@ -26,7 +26,7 @@ The engine should not include Arduino or ESP32 headers; know about GPIO pins, LE
 
 ### Conceptual interface
 
-The first implementation needs equivalents of these operations, regardless of the final C++ form:
+The initial C++ entry point is `scpi::EngineInterface::processProgramMessage(const std::string&)`. The transport calls it once for each complete, non-empty program message. The full engine will additionally need equivalents of these operations:
 
 - Register a command path and its handler.
 - Submit one complete SCPI program message for processing.
