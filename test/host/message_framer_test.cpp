@@ -19,23 +19,23 @@ int main() {
     expectMessage(lf.feed('\n', 2), "A", MessageFramer::TERMINATED_BY_LF);
     assert(lf.feed('\n', 3).type == MessageFramer::NO_EVENT);
 
-    // CR-LF is one boundary, including when the pair spans feed calls.
+    // Standalone CR terminates a message.
+    MessageFramer cr;
+    cr.feed('B', 10);
+    expectMessage(cr.feed('\\r', 11), "B", MessageFramer::TERMINATED_BY_CR);
+
+    // CRLF is accepted: CR completes the message and the following LF is
+    // an empty boundary, which is ignored.
     MessageFramer crlf;
-    crlf.feed('B', 10);
-    assert(crlf.feed('\r', 11).type == MessageFramer::NO_EVENT);
-    expectMessage(crlf.feed('\n', 12), "B", MessageFramer::TERMINATED_BY_CRLF);
-
-    // A CR not followed by LF is data, not a message terminator.
     crlf.feed('C', 13);
-    crlf.feed('\r', 14);
-    assert(crlf.poll(14).type == MessageFramer::NO_EVENT);
-    expectMessage(crlf.feed('\n', 15), "C\r", MessageFramer::TERMINATED_BY_LF);
+    expectMessage(crlf.feed('\\r', 14), "C", MessageFramer::TERMINATED_BY_CR);
+    assert(crlf.feed('\\n', 15).type == MessageFramer::NO_EVENT);
 
-    // A non-LF byte after CR remains in the same message.
+    // A byte after CR begins the next message.
     crlf.feed('D', 16);
-    crlf.feed('\r', 17);
+    expectMessage(crlf.feed('\\r', 17), "D", MessageFramer::TERMINATED_BY_CR);
     crlf.feed('E', 18);
-    expectMessage(crlf.feed('\n', 19), "D\rE", MessageFramer::TERMINATED_BY_LF);
+    expectMessage(crlf.feed('\\n', 19), "E", MessageFramer::TERMINATED_BY_LF);
 
     // Inactivity timeout and timer rollover.
     MessageFramer timed(MessageFramer::Config(32, 20));
