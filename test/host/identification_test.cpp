@@ -15,13 +15,13 @@ int main() {
     scpi::ErrorQueue errors;
     CaptureResponseSink responses;
     scpi::Identification identity("! Amused Scientist", "SCPI-ESP32",
-                                  "NOT SET", "NOT SET");
+                                  "AA:BB:CC:DD:EE:FF", "0.1.0");
     assert(identity.registerWith(registry));
 
     scpi::Engine engine(registry, errors, responses);
     engine.processScpiMessage("*IDN?");
     assert(responses.response ==
-           "! Amused Scientist,SCPI-ESP32,NOT SET,NOT SET");
+           "! Amused Scientist,SCPI-ESP32,AA:BB:CC:DD:EE:FF,0.1.0");
     assert(errors.empty());
 
     engine.processScpiMessage("*IDN");
