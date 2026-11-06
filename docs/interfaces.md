@@ -2,7 +2,7 @@
 
 **Status:** Initial implementation contract. The message-framing component, engine entry-point interface, framed-input adapter, error queue, response sink, and exact-path command registry are implemented; host test sources are provided, but have not yet been run in a working build environment.
 
-This document defines the responsibilities and boundaries for the first host-testable SCPI-ESP32 vertical slice. It deliberately avoids choosing a final callback mechanism, class hierarchy, or build system.
+This document defines the responsibilities and boundaries for the first host-testable SCPI-ESP32 vertical slice. It records the initial function-pointer handler mechanism while leaving parser representation, standards details, and some implementation limits open.
 
 ## 1. Overall flow
 
