@@ -17,6 +17,16 @@ int main() {
     assert(request.is_query);
     assert(request.parameter_text.empty());
 
+    assert(parser.parse("*IDN?", request) == scpi::ParseResult::Ok);
+    assert(request.command_path == "*IDN");
+    assert(request.is_query);
+    assert(request.parameter_text.empty());
+
+    assert(parser.parse("*IDN", request) == scpi::ParseResult::Ok);
+    assert(!request.is_query);
+    assert(parser.parse("*", request) == scpi::ParseResult::InvalidHeader);
+    assert(parser.parse("*IDN:FOO?", request) == scpi::ParseResult::InvalidHeader);
+
     assert(parser.parse("SOURce:VOLTage  3.3  ", request) == scpi::ParseResult::Ok);
     assert(request.parameter_text == "3.3");
 
