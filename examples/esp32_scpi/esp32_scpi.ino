@@ -2,7 +2,7 @@
  * SCPI-ESP32 initial ESP32 Arduino integration example.
  *
  * Target: ESP32 Arduino core; default onboard LED GPIO 2, active high.
- * Serial SCPI transport: USB/UART at 115200 baud, LF or CRLF terminated.
+ * Serial SCPI transport: USB/UART at 115200 baud, CR, LF, or CRLF terminated; 1 s inactivity timeout.
  * The generic SCPI engine and HEARTBEAT service remain hardware independent.
  */
 
