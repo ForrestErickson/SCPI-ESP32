@@ -22,18 +22,18 @@ int main() {
     // Standalone CR terminates a message.
     MessageFramer cr;
     cr.feed('B', 10);
-    expectMessage(cr.feed('\\r', 11), "B", MessageFramer::TERMINATED_BY_CR);
+    expectMessage(cr.feed('\r', 11), "B", MessageFramer::TERMINATED_BY_CR);
 
     // CRLF is accepted: CR completes the message and the following LF is
     // an empty boundary, which is ignored.
     MessageFramer crlf;
     crlf.feed('C', 13);
-    expectMessage(crlf.feed('\\r', 14), "C", MessageFramer::TERMINATED_BY_CR);
+    expectMessage(crlf.feed('\r', 14), "C", MessageFramer::TERMINATED_BY_CR);
     assert(crlf.feed('\\n', 15).type == MessageFramer::NO_EVENT);
 
     // A byte after CR begins the next message.
     crlf.feed('D', 16);
-    expectMessage(crlf.feed('\\r', 17), "D", MessageFramer::TERMINATED_BY_CR);
+    expectMessage(crlf.feed('\r', 17), "D", MessageFramer::TERMINATED_BY_CR);
     crlf.feed('E', 18);
     expectMessage(crlf.feed('\\n', 19), "E", MessageFramer::TERMINATED_BY_LF);
 
