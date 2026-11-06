@@ -32,7 +32,7 @@ public:
 private:
     MessageFramer::Result dispatchIfReady(const MessageFramer::Result& result) {
         if (result.type == MessageFramer::MESSAGE_READY) {
-            engine_.processProgramMessage(result.message);
+            engine_.processScpiMessage(result.message);
         }
         return result;
     }
