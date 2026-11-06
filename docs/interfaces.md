@@ -71,7 +71,7 @@ Startup behavior is also defined:
 
 The setup indication and HEARTBEAT both use the logical LED output interface. The board adapter remains responsible for translating logical ON/OFF into the correct GPIO voltage for the selected LED wiring.
 
-The behavior when period or duty cycle is changed during operation remains an open decision.
+When the duty cycle is changed while HEARTBEAT is running, the timing cycle restarts immediately using the new duty cycle. The LED is logically ON at the start of that new cycle (unless the new duty cycle is 0%). The behavior when the period is changed during operation remains an open decision.
 
 ### Conceptual operations
 
@@ -161,7 +161,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - How response writing and error reporting are exposed to handlers.
 - Maximum command/message and response sizes.
 - Period numeric representation, minimum/maximum values, and resolution.
-- Whether a period or duty-cycle change restarts the current cycle or takes effect relative to the existing cycle.
+- Whether changing the period restarts the current cycle or takes effect relative to the existing cycle (the duty-cycle change behavior is decided: restart immediately).
 - The first ESP32 board and its actual onboard LED pin/polarity.
 - The first physical transport and host build/test framework.
 
