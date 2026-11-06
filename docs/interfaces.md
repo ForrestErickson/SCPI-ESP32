@@ -1,6 +1,6 @@
 # Software Interface Contract
 
-**Status:** Initial implementation contract. The message-framing component, engine entry-point interface, and framed-input adapter are implemented and host-test sources are provided; the parser and dispatcher remain future work.
+**Status:** Initial implementation contract. The message-framing component, engine entry-point interface, framed-input adapter, error queue, response sink, and exact-path command registry are implemented; host test sources are provided, but have not yet been run in a working build environment.
 
 This document defines the responsibilities and boundaries for the first host-testable SCPI-ESP32 vertical slice. It deliberately avoids choosing a final callback mechanism, class hierarchy, or build system.
 
@@ -38,7 +38,7 @@ When the error queue is full, existing entries are preserved. Further errors are
 
 These interfaces are independent of Arduino, ESP32, and any particular transport. Host tests can use a small fake response sink to capture output without a serial port.
 
-A command handler should receive only the parsed request context and the application/service object it needs. It should not need direct access to Arduino APIs.
+The initial `scpi::CommandRegistry` stores exact command paths and associates each with a function-pointer handler and optional application context pointer. `scpi::CommandRequest` carries the parsed command path, query flag, and parameter text. The handler signature is `void`: it receives the application context, request, `ErrorQueue`, and `ResponseSink`. It reports errors by adding entries to the queue and emits query output through the sink. The registry's `dispatch()` return value means only that a matching handler was found and invoked; it is not a success/failure result for command execution.\n\nRegistry matching is case-insensitive but currently exact. It does not yet implement SCPI short/long keyword abbreviation, command-tree defaults, semicolon-separated message units, or parameter grammar. Those belong in the parser/standards work; do not treat this initial registry as a complete SCPI resolver. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
 
 ## 3. Transport boundary
 
@@ -183,7 +183,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 1. Implement and host-test the message framer and the engine entry-point/transport bridge. **The code and host test sources are now in place; execution remains to be verified in a working build environment.**
 2. Define and test the SCPI error queue and response-sink interfaces. **The interfaces and error-queue host test source are now in place; execution remains to be verified in a working build environment.**
-3. Implement the generic parser, command registry, and dispatcher with a small test command.
+3. Implement the generic parser and connect it to the command registry/dispatcher; add a small test command. **The initial exact-path registry and its host test source are now in place; parser integration remains future work.**
 4. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
 5. Register the HEARTBEAT SCPI command module with the engine.
 6. Test command-to-service behavior and query responses on the host.
