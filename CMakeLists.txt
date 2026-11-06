@@ -26,3 +26,7 @@ add_test(NAME command_registry_test COMMAND command_registry_test)
 add_executable(parser_test test/host/parser_test.cpp)
 target_include_directories(parser_test PRIVATE src)
 add_test(NAME parser_test COMMAND parser_test)
+
+add_executable(engine_test test/host/engine_test.cpp)
+target_include_directories(engine_test PRIVATE src)
+add_test(NAME engine_test COMMAND engine_test)
