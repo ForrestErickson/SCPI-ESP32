@@ -73,22 +73,22 @@ Use rollover-safe elapsed-time calculations. The achievable blink timing depends
 The reusable HEARTBEAT service should be usable by different instrument applications. Its first implementation should support:
 
 - Enable/disable of blinking.
-- A configurable blink frequency, expressed in hertz.
+- A configurable blink period, expressed in seconds per complete on/off cycle.
 - A configurable duty cycle, expressed as a percentage from 0 through 100.
 - A configurable LED GPIO pin and active polarity supplied by board/application configuration.
 - Deterministic handling of invalid settings, with errors reported through the engine's error mechanism.
 
-The exact allowed frequency range, numeric precision, behavior at duty-cycle endpoints, and startup defaults remain to be decided. A disabled heartbeat should leave the LED in a documented state. A 0% duty cycle means continuously off during blinking; 100% means continuously on.
+The exact allowed period range, numeric precision, behavior at duty-cycle endpoints, and startup defaults remain to be decided. A disabled heartbeat should leave the LED in a documented state. A 0% duty cycle means continuously off during blinking; 100% means continuously on.
 
-Illustrative command family (proposed names, not yet finalized):
+Illustrative command family (proposed names, not yet finalized). PERIOD is expressed in seconds; DUTYcycle is expressed as a percentage:
 
 ```text
 HEARTbeat:STATe ON
-HEARTbeat:FREQuency 2
-HEARTbeat:DCYCle 25
+HEARTbeat:PERiod 2
+HEARTbeat:DUTYcycle 25
 HEARTbeat:STATe?
-HEARTbeat:FREQuency?
-HEARTbeat:DCYCle?
+HEARTbeat:PERiod?
+HEARTbeat:DUTYcycle?
 ```
 
 The pin and polarity are initially configuration properties rather than required SCPI commands. The command spelling, short forms, units, and behavior must be checked against the chosen SCPI rules and project naming conventions.
@@ -122,7 +122,7 @@ The first milestone is successful when the host tests pass and the hardware exam
 - Build system and host-test framework.
 - Command registration and handler API design.
 - Parser limits, message buffering, and memory strategy.
-- HEARTBEAT startup defaults, valid frequency range, and numeric precision.
+- HEARTBEAT startup defaults, valid period range, and numeric precision.
 - Whether GPIO selection is compile-time/board configuration only or also runtime configurable.
 - Scope of common commands, status registers, and error-queue behavior.
 
