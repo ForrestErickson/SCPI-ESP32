@@ -30,3 +30,7 @@ add_test(NAME parser_test COMMAND parser_test)
 add_executable(engine_test test/host/engine_test.cpp)
 target_include_directories(engine_test PRIVATE src)
 add_test(NAME engine_test COMMAND engine_test)
+
+add_executable(identification_test test/host/identification_test.cpp)
+target_include_directories(identification_test PRIVATE src)
+add_test(NAME identification_test COMMAND identification_test)
