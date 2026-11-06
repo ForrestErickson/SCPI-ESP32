@@ -24,6 +24,10 @@
 #define SCPI_STATUS_LED_ACTIVE_HIGH 1
 #endif
 
+#ifndef SCPI_INPUT_TIMEOUT_MS
+#define SCPI_INPUT_TIMEOUT_MS 1000
+#endif
+
 #ifndef SCPI_FIRMWARE_REVISION
 #define SCPI_FIRMWARE_REVISION "0.1.0"
 #endif
@@ -72,7 +76,7 @@ static scpi::Engine scpi_engine(command_registry, error_queue, response_sink);
 static scpi::HeartbeatCommands heartbeat_commands(
     heartbeat, monotonicMilliseconds);
 static scpi::transport::FramedInput framed_input(
-    scpi_engine, scpi::transport::MessageFramer::Config(256, 0));
+    scpi_engine, scpi::transport::MessageFramer::Config(256, SCPI_INPUT_TIMEOUT_MS));
 
 void setup() {
     // The status LED is the setup-running indicator. The heartbeat service's
