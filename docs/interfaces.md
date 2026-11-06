@@ -52,6 +52,17 @@ The HEARTBEAT service owns whether heartbeat operation is enabled, the configure
 
 It does not own SCPI parsing or command registration, a GPIO number or electrical polarity, Arduino pin APIs, or blocking delays.
 
+### Initial operating settings
+
+The agreed initial HEARTBEAT settings are:
+
+- Period: **2 seconds** per complete cycle.
+- Duty cycle: **25%** of each cycle.
+
+With these settings, the logical LED is on for 0.5 seconds and off for 1.5 seconds in each 2-second cycle, while heartbeat is enabled.
+
+The startup enabled/disabled state and the behavior when period or duty cycle is changed during operation remain open decisions.
+
 ### Conceptual operations
 
 The service needs equivalents of:
@@ -74,7 +85,7 @@ The service must not call delay() or otherwise wait for a blink transition. It c
 - When heartbeat is disabled, the logical output is off.
 - For intermediate duty cycles, the on interval begins at the start of each cycle.
 
-The valid positive period range, resolution, numeric representation, and startup defaults still need to be selected. Invalid values must be rejected without silently changing the active configuration.
+The valid positive period range, resolution, and numeric representation still need to be selected. Invalid values must be rejected without silently changing the active configuration.
 
 ## 5. Logical LED output and board adapter
 
@@ -138,7 +149,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - How response writing and error reporting are exposed to handlers.
 - Maximum command/message and response sizes.
 - Period numeric representation, minimum/maximum values, and resolution.
-- Startup defaults for enabled state, period, and duty cycle.
+- Startup enabled/disabled state.
 - Whether a period or duty-cycle change restarts the current cycle or takes effect relative to the existing cycle.
 - The first ESP32 board and its actual onboard LED pin/polarity.
 - The first physical transport and host build/test framework.
