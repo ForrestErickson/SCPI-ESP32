@@ -40,9 +40,9 @@ These interfaces are independent of Arduino, ESP32, and any particular transport
 
 The initial `scpi::CommandRegistry` stores registered long-form command paths and associates each with a function-pointer handler and optional application context pointer. Uppercase letters in a registration define the minimum short form (for example, `MEASure:VOLTage` accepts `MEAS:VOLT`); matching is case-insensitive and each path component is resolved independently. `scpi::CommandRequest` carries the parsed command path, query flag, and parameter text. The handler signature is `void`: it receives the application context, request, `ErrorQueue`, and `ResponseSink`. It reports errors by adding entries to the queue and emits query output through the sink. The registry's `dispatch()` return value means only that a matching handler was found and invoked; it is not a success/failure result for command execution. 
 
-The initial `scpi::Parser` separates one subsystem command header, an optional query marker, and the remaining parameter text. It trims surrounding whitespace and rejects malformed headers. It intentionally does not parse parameter grammar. The first slice accepts one command unit per message; semicolon-separated units and common commands (such as `*IDN?`) are not yet supported. Command-tree defaults and full SCPI syntax remain future work; do not treat this subset as a complete SCPI implementation. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
+The initial `scpi::Parser` separates one subsystem command header, an optional query marker, and the remaining parameter text. It trims surrounding whitespace and rejects malformed headers. It intentionally does not parse parameter grammar. The first slice accepts one command unit per message; semicolon-separated units and common commands beyond the initial `*IDN?` support are not yet supported. Command-tree defaults and full SCPI syntax remain future work; do not treat this subset as a complete SCPI implementation. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
 
-## 3. Parser and command registry\n\nThe parser currently recognizes one subsystem command unit per message. It separates the command header from parameter text at the first whitespace, recognizes a trailing query marker, and rejects malformed headers. It does not yet interpret parameter values. The registry resolves each colon-separated keyword using the mandatory uppercase prefix and optional lowercase suffix shown in the registered long form. This is a deliberately limited first subset: common commands, semicolon-separated command units, command-tree defaults, and detailed parameter grammar remain to be implemented.\n\n## 4. Transport boundary
+## 3. Parser and command registry\n\nThe parser currently recognizes one subsystem command unit per message. It separates the command header from parameter text at the first whitespace, recognizes a trailing query marker, and rejects malformed headers. It does not yet interpret parameter values. The registry resolves each colon-separated keyword using the mandatory uppercase prefix and optional lowercase suffix shown in the registered long form. This is a deliberately limited first subset: additional common commands, semicolon-separated command units, command-tree defaults, and detailed parameter grammar remain to be implemented.\n\n## 4. Transport boundary
 
 A transport moves bytes and determines when a complete message is ready. The transport/application boundary supplies complete messages to the engine and carries engine responses back to the controller.
 
@@ -125,7 +125,7 @@ The pin and polarity are board/application configuration. They are not generic S
 
 A small abstract output interface allows host tests to substitute a fake LED and record logical state changes without physical hardware.
 
-## 7. HEARTBEAT SCPI command module
+## 7. Identification common command\n\nThe reusable `scpi::Identification` helper registers the common query `*IDN?`. The application supplies the four response fields: manufacturer, model, serial number, and firmware revision. The handler returns them in that order, separated by commas. The fields must not contain commas because this initial implementation does not implement quoted-field escaping. The `Identification` object must remain alive for as long as the registry may dispatch its handler. The helper does not invent device-specific identity values; the application owns them. `*IDN` without the query marker, or `*IDN?` with parameters, reports error `-108` (Parameter not allowed). This is an initial common-command subset, not a claim of complete IEEE 488.2 support.\n\n## 8. HEARTBEAT SCPI command module
 
 The command module connects the generic engine to the HEARTBEAT service. It registers handlers and translates SCPI parameters into service operations.
 
@@ -145,7 +145,7 @@ These are project command-name decisions, subject to verification of SCPI spelli
 
 The command module validates values and reports invalid settings through the generic engine's error mechanism. It does not perform GPIO operations or implement the timing algorithm.
 
-## 8. Application main-loop integration
+## 9. Application main-loop integration
 
 The application owns the objects and connects the boundaries. Conceptually, its lifecycle is:
 
@@ -157,7 +157,7 @@ The application owns the objects and connects the boundaries. Conceptually, its 
 
 The exact order of the recurring loop operations may be adjusted, but neither the engine nor the HEARTBEAT service should block waiting for I/O or time to pass. A long-running handler elsewhere in the application can still delay heartbeat servicing; the heartbeat therefore indicates that the loop is being serviced, not that every subsystem is healthy.
 
-## 9. Host-test strategy
+## 10. Host-test strategy
 
 The first host test build should substitute fakes for hardware and transport:
 
@@ -170,7 +170,7 @@ Tests should verify the setup LED sequence (ON at setup start, OFF at setup comp
 
 The same HEARTBEAT service logic should be used in host tests and in the ESP32 application; only the clock and LED output adapters should differ.
 
-## 10. Decisions still open
+## 11. Decisions still open
 
 - How the parser represents command headers, parameters, and message units internally.
 - How SCPI short/long keyword forms and command-tree path rules are resolved before registry dispatch.
@@ -181,11 +181,11 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - Confirm the exact ESP32 DevKit V1 board revision and onboard LED polarity; the user reports an ESP32-WROOM module and GPIO 2 LED.
 - The first physical transport and host build/test framework.
 
-## 11. First implementation order
+## 12. First implementation order
 
 1. Implement and host-test the message framer and the engine entry-point/transport bridge. **The code and host test sources are now in place; execution remains to be verified in a working build environment.**
 2. Define and test the SCPI error queue and response-sink interfaces. **The interfaces and error-queue host test source are now in place; execution remains to be verified in a working build environment.**
-3. Implement the initial parser and SCPI short/long keyword resolution; add host tests. **The first parser slice, registry abbreviation matching, and synchronous engine-to-registry dispatch are now in place; broader SCPI syntax remains future work.**
+3. Implement the initial parser and SCPI short/long keyword resolution; add host tests. **The first parser slice, registry abbreviation matching, synchronous engine-to-registry dispatch, and initial `*IDN?` common-command support are now in place; broader SCPI syntax remains future work.**
 4. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
 5. Register the HEARTBEAT SCPI command module with the engine.
 6. Test command-to-service behavior and query responses on the host.
