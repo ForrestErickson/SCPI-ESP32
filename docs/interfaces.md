@@ -183,8 +183,8 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - How SCPI short/long keyword forms and command-tree path rules are resolved before registry dispatch.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
 - Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
-- Confirm the exact ESP32 DevKit V1 board revision and onboard LED polarity; the user reports an ESP32-WROOM module and GPIO 2 LED.
-- The first physical transport and host build/test framework.
+- Confirm the onboard LED polarity on the physical ESP32 DevKit V1; the user confirmed an ESP32-WROOM-32 board with GPIO 2 LED.
+- Confirm the physical serial adapter/port and verify the first firmware upload.
 
 ## 12. First implementation order
 
