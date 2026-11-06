@@ -73,14 +73,14 @@ Use rollover-safe elapsed-time calculations. The achievable blink timing depends
 The reusable HEARTBEAT service should be usable by different instrument applications. Its first implementation should support:
 
 - Enable/disable of blinking.
-- A configurable blink period, expressed in seconds per complete on/off cycle.
+- A configurable blink period, expressed in seconds per complete on/off cycle. Positive decimal values are allowed; the valid range and resolution remain to be established.
 - A configurable duty cycle, expressed as a percentage from 0 through 100.
 - A configurable LED GPIO pin and active polarity supplied by board/application configuration.
 - Deterministic handling of invalid settings, with errors reported through the engine's error mechanism.
 
-The exact allowed period range, numeric precision, behavior at duty-cycle endpoints, and startup defaults remain to be decided. A disabled heartbeat should leave the LED in a documented state. A 0% duty cycle means continuously off during blinking; 100% means continuously on.
+The exact allowed period range, numeric precision, and startup defaults remain to be decided. `STATe OFF` turns the LED off, using the configured electrical polarity. While enabled, a 0% duty cycle means continuously off and 100% means continuously on; intermediate values determine the on-time as a percentage of the complete period.
 
-Illustrative command family (proposed names, not yet finalized). PERIOD is expressed in seconds; DUTYcycle is expressed as a percentage:
+The agreed initial command-family names are shown below. PERIOD is expressed in seconds per complete cycle; DUTYcycle is expressed as a percentage:
 
 ```text
 HEARTbeat:STATe ON
