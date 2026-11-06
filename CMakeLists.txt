@@ -34,3 +34,7 @@ add_test(NAME engine_test COMMAND engine_test)
 add_executable(identification_test test/host/identification_test.cpp)
 target_include_directories(identification_test PRIVATE src)
 add_test(NAME identification_test COMMAND identification_test)
+
+add_executable(heartbeat_test test/host/heartbeat_test.cpp)
+target_include_directories(heartbeat_test PRIVATE src)
+add_test(NAME heartbeat_test COMMAND heartbeat_test)
