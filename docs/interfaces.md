@@ -26,14 +26,17 @@ The engine should not include Arduino or ESP32 headers; know about GPIO pins, LE
 
 ### Conceptual interface
 
-The initial C++ entry point is `scpi::EngineInterface::processScpiMessage(const std::string&)`. The transport calls it once for each complete, non-empty program message. The full engine will additionally need equivalents of these operations:
+The initial C++ entry point is `scpi::EngineInterface::processScpiMessage(const std::string&)`. It remains `void`: the transport submits a complete, non-empty program message, and the engine reports SCPI-visible processing errors through an error queue rather than a per-message return value.
 
-- Register a command path and its handler.
-- Submit one complete SCPI program message for processing.
-- Write a response from a query handler.
-- Record or return a defined error when processing fails.
+The initial support interfaces are:
 
-The engine should receive an application-provided output sink or equivalent abstraction. This allows host tests to capture response text without a serial port.
+- `scpi::ErrorQueue` stores `ScpiError` entries in FIFO order. Its default capacity is 16 entries.
+- `scpi::ScpiError` keeps an integer error code separate from its explanatory message.
+- `scpi::ResponseSink::writeResponse()` accepts a complete response string. The concrete sink owns transport-specific delivery and termination; the engine does not append LF or CRLF itself.
+
+When the error queue is full, existing entries are preserved. Further errors are not stored individually; one `-350, "Queue overflow"` indication is made available after the stored entries have been read. This is the project's initial bounded-queue policy and will be checked against the selected SCPI specification before claiming conformance.
+
+These interfaces are independent of Arduino, ESP32, and any particular transport. Host tests can use a small fake response sink to capture output without a serial port.
 
 A command handler should receive only the parsed request context and the application/service object it needs. It should not need direct access to Arduino APIs.
 
@@ -168,7 +171,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 ## 9. Decisions still open
 
 - Whether handlers use function pointers, callbacks, interfaces, or another registration mechanism.
-- How response writing and error reporting are exposed to handlers.
+- The command-handler registration and request-context API.
 - How the parser represents command headers, parameters, and message units internally.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
 - Period numeric representation, minimum/maximum values, and resolution.
@@ -179,10 +182,11 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 ## 10. First implementation order
 
 1. Implement and host-test the message framer and the engine entry-point/transport bridge. **The code and host test sources are now in place; execution remains to be verified in a working build environment.**
-2. Implement the generic parser, command registry, and dispatcher with a small test command.
-3. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
-4. Register the HEARTBEAT SCPI command module with the engine.
-5. Test command-to-service behavior and query responses on the host.
-6. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
+2. Define and test the SCPI error queue and response-sink interfaces. **The interfaces and error-queue host test source are now in place; execution remains to be verified in a working build environment.**
+3. Implement the generic parser, command registry, and dispatcher with a small test command.
+4. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
+5. Register the HEARTBEAT SCPI command module with the engine.
+6. Test command-to-service behavior and query responses on the host.
+7. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
 
 This order tests each boundary independently before combining them on hardware.
