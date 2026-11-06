@@ -177,6 +177,8 @@ The best-supported working baseline at this stage is:
 - **SCPI:** SCPI-99 (1999.0), with review of all four volumes and any available official errata.
 - **IEEE 488.2 foundation:** retain IEEE 488.2-1992 as the edition explicitly referenced by SCPI-99, and investigate IEEE/IEC 60488-2-2004 as the current active international publication of the related codes/formats/protocols/common-command standard.
 
-This is a recommendation for the next standards-review step, **not yet an approved conformance-target decision**. We should not silently replace SCPI-99's normative reference with another document based only on catalogue status. Before freezing the baseline, compare the scope, forewords, normative references, and relevant technical clauses of IEEE 488.2-1992 and IEEE/IEC 60488-2-2004. Record any differences that affect the project.
+**User approval:** This working baseline was approved for the SCPI-ESP32 project on 2026-11-06.
+
+The approved working references are SCPI-99 (1999.0) and the IEEE 488.2-1992 edition cited by SCPI-99. The project will also investigate IEEE/IEC 60488-2-2004. Approval of the working baseline does not assume that the 2004 publication is technically equivalent or that it replaces the 1992 reference. Compare their scope, forewords, normative references, and relevant technical clauses; record any differences that affect the project before making a final determination about that relationship.
 
 For the project, the practical next action is to review the complete SCPI-99 set and the available IEEE/IEC 60488-2-2004 text, then produce a clause-level applicability map. Until that work is complete, the existing compliance matrix remains provisional.
