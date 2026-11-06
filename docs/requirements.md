@@ -34,15 +34,27 @@ with the generic engine. Replacing an oscilloscope/function-generator
 application with a frequency counter, for example, should not require
 rewriting the generic parser.
 
-## 3. Initial demonstration instrument
+## 3. First implementation example and later instrument demonstrations
 
-The first demonstration application is planned to combine:
+The first example application will exercise the SCPI engine with a reusable
+HEARTBEAT service. HEARTBEAT drives a configurable status LED to indicate
+that the application's main loop is continuing to execute. It is deliberately
+small and does not require complex analog hardware.
+
+The HEARTBEAT service is application support, not part of the generic SCPI
+parser or dispatcher. An application may register the HEARTBEAT command family
+with the engine and call the nonblocking service regularly from its main loop.
+The LED GPIO pin and active-high/active-low polarity are board/application
+configuration, not generic SCPI-engine settings.
+
+A later demonstration application may combine:
 
 - A multichannel oscilloscope using ADC acquisition.
-- A dual-channel function generator using two DAC outputs.
+- A dual-channel function generator using available DAC or other suitable
+  output hardware.
 
-This combined instrument is a test application for exercising the engine. It
-is **not** to be built into, or assumed by, the generic SCPI core.
+That more complex instrument remains an application for exercising the engine;
+it is **not** to be built into, or assumed by, the generic SCPI core.
 
 Potential command areas include acquisition, channels, timebase, triggering,
 measurements, signal sources, waveform transfer, system functions, and
@@ -119,9 +131,15 @@ Exact semantics must be checked against the applicable specifications.
 
 ## 9. Candidate instrument-module responsibilities
 
-Instrument modules should define and implement their own command families,
-parameters, validation, and hardware behavior. For the first demonstration,
-possible families include:
+Instrument/application modules should define and implement their own command
+families, parameters, validation, and hardware behavior. The first example
+will register HEARTBEAT commands for state, period, and duty cycle. The
+period is expressed in seconds per complete blink cycle; duty cycle is a
+percentage from 0 through 100. LED pin and electrical polarity are supplied
+by board/application configuration. Blinking must be nonblocking so command
+processing continues while the LED changes state.
+
+Later instrument command families may include:
 
 - Acquisition and waveform capture.
 - Input channels and channel configuration.
@@ -155,9 +173,11 @@ These are illustrative areas, not a finalized command specification.
 6. Add host-side unit tests and continuous integration as practical.
 7. Select target hardware and implement hardware-independent driver
    interfaces plus the first ESP32 integration.
-8. Implement the oscilloscope/function-generator demonstration as an
-   instrument module.
-9. Expand and verify the supported SCPI feature set incrementally.
+8. Implement the HEARTBEAT example service and command module, including
+   host-testable timing behavior and ESP32 GPIO integration.
+9. Later, implement the oscilloscope/function-generator demonstration as a
+   separate instrument application.
+10. Expand and verify the supported SCPI feature set incrementally.
 
 ## 12. Open decisions
 
