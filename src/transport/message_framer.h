@@ -31,38 +31,87 @@ public:
         MESSAGE_OVERFLOW
     };
 
+    enum Terminator {
+        NO_TERMINATOR,
+        TERMINATED_BY_LF,
+        TERMINATED_BY_CRLF,
+        TERMINATED_BY_CR,
+        TERMINATED_BY_TIMEOUT
+    };
+
     struct Result {
         EventType type;
+        Terminator terminator;
         std::string message;
 
-        Result(EventType event = NO_EVENT, const std::string& text = std::string())
-            : type(event), message(text) {}
+        Result(EventType event = NO_EVENT,
+               const std::string& text = std::string(),
+               Terminator end = NO_TERMINATOR)
+            : type(event), terminator(end), message(text) {}
     };
 
     explicit MessageFramer(const Config& config = Config())
         : config_(config), last_byte_ms_(0), have_last_byte_time_(false),
-          swallow_lf_(false), discarding_overflow_(false) {
+          pending_cr_(false), discarding_overflow_(false) {
         buffer_.reserve(config_.max_message_bytes);
     }
 
-    // Supply each received byte and the monotonic millisecond timestamp at
-    // which it was received. A CR completes immediately; a following LF is
-    // consumed as the second half of CR-LF, including across calls.
+    // Supply each received byte and its monotonic millisecond timestamp.
+    // CR is held pending until the next byte or poll(): this distinguishes
+    // CR-LF from CR-only without an arbitrary timed delay.
     Result feed(uint8_t byte, uint32_t now_ms) {
-        if (swallow_lf_) {
-            swallow_lf_ = false;
+        if (pending_cr_) {
+            pending_cr_ = false;
             if (byte == '\n') {
-                return Result();
+                return finishMessage(TERMINATED_BY_CRLF);
             }
+            Result prior = finishMessage(TERMINATED_BY_CR);
+            Result current = processByte(byte, now_ms);
+            return prior.type != NO_EVENT ? prior : current;
         }
+        return processByte(byte, now_ms);
+    }
 
+    // Call after draining currently available input and regularly from the
+    // transport loop. A pending CR is resolved here as CR-only. Timeout
+    // framing is checked afterward.
+    Result poll(uint32_t now_ms) {
+        if (pending_cr_) {
+            pending_cr_ = false;
+            return finishMessage(TERMINATED_BY_CR);
+        }
+        if (config_.inactivity_timeout_ms == 0 || !have_last_byte_time_) {
+            return Result();
+        }
+        if (static_cast<uint32_t>(now_ms - last_byte_ms_) <
+            config_.inactivity_timeout_ms) {
+            return Result();
+        }
+        have_last_byte_time_ = false;
+        if (discarding_overflow_) {
+            discarding_overflow_ = false;
+            buffer_.clear();
+            return Result();
+        }
+        return finishMessage(TERMINATED_BY_TIMEOUT);
+    }
+
+    void reset() {
+        buffer_.clear();
+        have_last_byte_time_ = false;
+        pending_cr_ = false;
+        discarding_overflow_ = false;
+    }
+
+private:
+    Result processByte(uint8_t byte, uint32_t now_ms) {
         if (byte == '\n') {
-            return finishMessage();
+            return finishMessage(TERMINATED_BY_LF);
         }
 
         if (byte == '\r' && config_.accept_cr) {
-            swallow_lf_ = true;
-            return finishMessage();
+            pending_cr_ = true;
+            return Result();
         }
 
         if (discarding_overflow_) {
@@ -85,34 +134,7 @@ public:
         return Result();
     }
 
-    // Call regularly from the transport service loop. Uses unsigned elapsed
-    // arithmetic, which remains correct across uint32_t millisecond rollover.
-    Result poll(uint32_t now_ms) {
-        if (config_.inactivity_timeout_ms == 0 || !have_last_byte_time_) {
-            return Result();
-        }
-        if (static_cast<uint32_t>(now_ms - last_byte_ms_) <
-            config_.inactivity_timeout_ms) {
-            return Result();
-        }
-        have_last_byte_time_ = false;
-        if (discarding_overflow_) {
-            discarding_overflow_ = false;
-            buffer_.clear();
-            return Result();
-        }
-        return finishMessage();
-    }
-
-    void reset() {
-        buffer_.clear();
-        have_last_byte_time_ = false;
-        swallow_lf_ = false;
-        discarding_overflow_ = false;
-    }
-
-private:
-    Result finishMessage() {
+    Result finishMessage(Terminator terminator) {
         if (discarding_overflow_) {
             discarding_overflow_ = false;
             buffer_.clear();
@@ -127,14 +149,14 @@ private:
         completed.swap(buffer_);
         buffer_.reserve(config_.max_message_bytes);
         have_last_byte_time_ = false;
-        return Result(MESSAGE_READY, completed);
+        return Result(MESSAGE_READY, completed, terminator);
     }
 
     Config config_;
     std::string buffer_;
     uint32_t last_byte_ms_;
     bool have_last_byte_time_;
-    bool swallow_lf_;
+    bool pending_cr_;
     bool discarding_overflow_;
 };
 
