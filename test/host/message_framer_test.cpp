@@ -29,13 +29,13 @@ int main() {
     MessageFramer crlf;
     crlf.feed('C', 13);
     expectMessage(crlf.feed('\r', 14), "C", MessageFramer::TERMINATED_BY_CR);
-    assert(crlf.feed('\\n', 15).type == MessageFramer::NO_EVENT);
+    assert(crlf.feed('\n', 15).type == MessageFramer::NO_EVENT);
 
     // A byte after CR begins the next message.
     crlf.feed('D', 16);
     expectMessage(crlf.feed('\r', 17), "D", MessageFramer::TERMINATED_BY_CR);
     crlf.feed('E', 18);
-    expectMessage(crlf.feed('\\n', 19), "E", MessageFramer::TERMINATED_BY_LF);
+    expectMessage(crlf.feed('\n', 19), "E", MessageFramer::TERMINATED_BY_LF);
 
     // Inactivity timeout and timer rollover.
     MessageFramer timed(MessageFramer::Config(32, 20));
