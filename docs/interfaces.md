@@ -165,11 +165,11 @@ Tests should verify the setup LED sequence (ON at setup start, OFF at setup comp
 
 The same HEARTBEAT service logic should be used in host tests and in the ESP32 application; only the clock and LED output adapters should differ.
 
-## 9. Decisions to make before implementation
+## 9. Decisions still open
 
-- How complete messages and termination characters are represented at the engine boundary.
 - Whether handlers use function pointers, callbacks, interfaces, or another registration mechanism.
 - How response writing and error reporting are exposed to handlers.
+- How the parser represents command headers, parameters, and message units internally.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
 - Period numeric representation, minimum/maximum values, and resolution.
 - Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
