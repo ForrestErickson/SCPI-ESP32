@@ -60,13 +60,13 @@ public:
         return true;
     }
 
-    // Returns the registered entry or null when no exact path is registered.
-    // SCPI short/long keyword abbreviation rules are not implemented here;
-    // the parser/standards work must resolve those before dispatch.
+    // Resolves each supplied keyword against the registered long form.
+    // In a registration such as "MEASure:VOLTage", uppercase letters define
+    // the minimum (short) form and the complete token is the long form.
     const CommandEntry* find(const std::string& command_path) const {
         for (std::vector<CommandEntry>::const_iterator it = entries_.begin();
              it != entries_.end(); ++it) {
-            if (equalsIgnoreCase(it->command_path, command_path)) {
+            if (matchesScpiPath(it->command_path, command_path)) {
                 return &(*it);
             }
         }
@@ -91,19 +91,50 @@ public:
     }
 
 private:
-    static bool equalsIgnoreCase(const std::string& left,
-                                 const std::string& right) {
-        if (left.size() != right.size()) {
-            return false;
-        }
-        for (std::size_t i = 0; i < left.size(); ++i) {
-            const unsigned char a = static_cast<unsigned char>(left[i]);
-            const unsigned char b = static_cast<unsigned char>(right[i]);
-            if (std::tolower(a) != std::tolower(b)) {
-                return false;
-            }
+    static bool equalsIgnoreCasePrefix(const std::string& full,
+                                       const std::string& supplied) {
+        if (supplied.empty() || supplied.size() > full.size()) return false;
+        for (std::size_t i = 0; i < supplied.size(); ++i) {
+            const unsigned char a = static_cast<unsigned char>(full[i]);
+            const unsigned char b = static_cast<unsigned char>(supplied[i]);
+            if (std::tolower(a) != std::tolower(b)) return false;
         }
         return true;
+    }
+
+    static std::size_t mandatoryLength(const std::string& keyword) {
+        std::size_t count = 0;
+        for (std::size_t i = 0; i < keyword.size(); ++i) {
+            const unsigned char ch = static_cast<unsigned char>(keyword[i]);
+            if (std::isupper(ch)) ++count;
+        }
+        return count == 0 ? keyword.size() : count;
+    }
+
+    static bool matchesScpiPath(const std::string& registered,
+                                const std::string& supplied) {
+        std::string::size_type r = 0;
+        std::string::size_type s = 0;
+        while (r < registered.size() && s < supplied.size()) {
+            std::string::size_type re = registered.find(':', r);
+            std::string::size_type se = supplied.find(':', s);
+            if (re == std::string::npos) re = registered.size();
+            if (se == std::string::npos) se = supplied.size();
+
+            const std::string registered_keyword = registered.substr(r, re-r);
+            const std::string supplied_keyword = supplied.substr(s, se-s);
+            if (supplied_keyword.size() < mandatoryLength(registered_keyword) ||
+                !equalsIgnoreCasePrefix(registered_keyword, supplied_keyword)) {
+                return false;
+            }
+
+            if ((re == registered.size()) != (se == supplied.size())) {
+                return false;
+            }
+            r = re + 1;
+            s = se + 1;
+        }
+        return r > registered.size() && s > supplied.size();
     }
 
     std::vector<CommandEntry> entries_;
