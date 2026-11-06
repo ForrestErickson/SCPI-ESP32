@@ -153,3 +153,30 @@ Consequences:
 - Revisit the target editions before freezing the compliance checklist; SCPI 1999.0 Volume 1 and IEEE 488.2-1992 are the initial research references, not yet a final edition-selection decision.
 
 The first practical deliverable following this decision should be a requirement-to-test compliance matrix, followed by a staged implementation plan that starts with message parsing and command-tree behavior and grows toward the required common commands, status model, and other applicable SCPI features.
+
+
+## 9. Standards catalogue review — 2026-11-06
+
+A current review of the standards-maintainer and standards-publisher catalogues adds the following information:
+
+1. **SCPI publication source.** The IVI Foundation identifies itself as the maintainer of the SCPI specifications and its current specification-download page lists **SCPI-99** as the available SCPI document. The SCPI overview says SCPI is built on IEEE 488.2 and requires IEEE 488.2 conformance, while remaining a hardware-independent software language.
+2. **SCPI-99 remains the available published SCPI reference.** The current IVI download page lists SCPI-99; no later SCPI edition was identified in that catalogue review. This is evidence about the currently published IVI listing, not proof that no unpublished maintenance material or errata exists.
+3. **IEEE 488.2-1992 status.** IEEE's catalogue page for IEEE 488.2-1992 identifies it as an Inactive-Reserved Standard.
+4. **Related international publication.** IEEE's catalogue lists **IEEE/IEC 60488-2-2004**, *Standard Digital Interface for Programmable Instrumentation — Part 2: Codes, formats, protocols and common commands*, as an Active Standard. It covers codes, formats, protocols, and common commands for programmable instrumentation. It is a closely related international publication and a candidate reference for the IEEE 488.2 foundation, but its exact normative relationship and technical equivalence to the edition cited by SCPI-99 must be confirmed from the complete documents before we declare it a replacement or substitute.
+
+Catalogue sources reviewed:
+- IVI Foundation, SCPI overview: https://www.ivifoundation.org/About-IVI/scpi.html
+- IVI Foundation, current specification downloads (SCPI-99 listing): https://www.ivifoundation.org/specifications/default.html
+- IEEE, IEEE 488.2-1992 catalogue status: https://standards.ieee.org/ieee/488.2/718/
+- IEEE, IEEE/IEC 60488-2-2004 catalogue status and scope: https://standards.ieee.org/ieee/60488-2/3632/
+
+### Recommended baseline for user decision
+
+The best-supported working baseline at this stage is:
+
+- **SCPI:** SCPI-99 (1999.0), with review of all four volumes and any available official errata.
+- **IEEE 488.2 foundation:** retain IEEE 488.2-1992 as the edition explicitly referenced by SCPI-99, and investigate IEEE/IEC 60488-2-2004 as the current active international publication of the related codes/formats/protocols/common-command standard.
+
+This is a recommendation for the next standards-review step, **not yet an approved conformance-target decision**. We should not silently replace SCPI-99's normative reference with another document based only on catalogue status. Before freezing the baseline, compare the scope, forewords, normative references, and relevant technical clauses of IEEE 488.2-1992 and IEEE/IEC 60488-2-2004. Record any differences that affect the project.
+
+For the project, the practical next action is to review the complete SCPI-99 set and the available IEEE/IEC 60488-2-2004 text, then produce a clause-level applicability map. Until that work is complete, the existing compliance matrix remains provisional.
