@@ -2,6 +2,7 @@
 #include <string>
 
 #include "scpi/engine.h"
+#include "scpi/identification.h"
 
 class CaptureResponseSink : public scpi::ResponseSink {
 public:
@@ -39,6 +40,9 @@ int main() {
     InstrumentState state;
 
     assert(registry.registerCommand("SOURce:VOLTage", voltageHandler, &state));
+    scpi::Identification identity("! Amused Scientist", "SCPI-ESP32",
+                                  "NOT SET", "NOT SET");
+    assert(identity.registerWith(registry));
     scpi::Engine engine(registry, errors, responses);
 
     engine.processScpiMessage("SOUR:VOLT 1.25");
@@ -49,6 +53,19 @@ int main() {
     engine.processScpiMessage("SOUR:VOLT?");
     assert(responses.response == "1.25");
     assert(errors.empty());
+
+    engine.processScpiMessage("*IDN?");
+    assert(responses.response ==
+           "! Amused Scientist,SCPI-ESP32,NOT SET,NOT SET");
+    assert(errors.empty());
+
+    engine.processScpiMessage("*IDN");
+    assert(errors.pop(error));
+    assert(error.code == -108);
+
+    engine.processScpiMessage("*IDN? extra");
+    assert(errors.pop(error));
+    assert(error.code == -108);
 
     engine.processScpiMessage("NOPE?");
     scpi::ScpiError error;
