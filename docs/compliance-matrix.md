@@ -1,7 +1,8 @@
 # SCPI-ESP32 Requirements-to-Tests Compliance Matrix
 
-**Status:** Initial working matrix; requirements and clause mappings require review against the selected complete standards editions.  
+**Status:** Working matrix; detailed requirements and clause mappings remain under review.  
 **Project decision:** Eventual SCPI conformance, developed incrementally, with every implemented feature tested.  
+**Approved working standards baseline (2026-11-06):** SCPI-99 (1999.0) and its cited IEEE 488.2-1992 reference; IEEE/IEC 60488-2-2004 will be investigated but is not presumed to replace the cited edition.  
 **Current implementation status:** No parser or conformance feature is yet marked implemented and tested.
 
 ## 1. Purpose and status conventions
@@ -24,7 +25,7 @@ The standards references below are provisional. The initial research references 
 
 | ID | Requirement | Source / basis | Planned verification | Status |
 |---|---|---|---|---|
-| STD-001 | Select and record the exact SCPI and IEEE 488.2 editions used as the conformance target. | Project conformance decision; standards selection | Review standards catalogue and complete documents; approve a recorded target-edition decision. | Not started |
+| STD-001 | Select and record the SCPI and IEEE 488.2 working baseline, then confirm final applicability and any relationship to later related editions. | User-approved working baseline: SCPI-99 (1999.0) and its cited IEEE 488.2-1992 reference; IEEE/IEC 60488-2-2004 comparison remains open. | Verify all four SCPI-99 volumes, available errata, and the relevant IEEE documents; document applicability and any differences. | In progress |
 | STD-002 | Maintain traceability from each applicable standards requirement to implementation and tests. | Project conformance decision | Matrix review: every applicable requirement has implementation location and test IDs. | Not started |
 | MSG-001 | Recognize the supported SCPI program-message structure and message units. | SCPI 1999.0 Vol. 1; detailed clause mapping pending | Parse valid single-unit and compound program messages; reject malformed structures. | Not started |
 | MSG-002 | Handle message termination and framing according to the selected standard and transport contract. | SCPI / IEEE 488.2; exact rules and clause mapping pending | Test each supported terminator, missing terminator, repeated terminator, and transport fragmentation/coalescing cases. | Not started |
