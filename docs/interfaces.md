@@ -255,9 +255,10 @@ The example intentionally does not connect to a Wi-Fi access point. Wi-Fi is
 placed in station mode to obtain the station MAC address; no network SCPI
 transport is implemented yet.
 
-With a compatible ESP32 Arduino board selected, open the sketch in the Arduino
-IDE (or copy it into an Arduino sketch folder named `esp32_scpi`) and add the
-repository's `src` directory to the compiler include path. The sketch has not
+Install this repository as an Arduino library (for example, clone it into
+the Arduino libraries directory as `SCPI-ESP32`), then open
+`examples/esp32_scpi/esp32_scpi.ino` from the Arduino IDE. Select a compatible
+ESP32 board and its serial port before compiling. The sketch has not
 yet been cross-compiled or run on a physical ESP32. The first hardware test
 should verify setup LED behavior, the heartbeat cadence, and the response to
 `*IDN?\n` before exercising the remaining HEARTBEAT commands.
