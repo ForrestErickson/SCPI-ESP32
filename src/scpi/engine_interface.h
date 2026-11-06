@@ -10,7 +10,7 @@ namespace scpi {
 class EngineInterface {
 public:
     virtual ~EngineInterface() {}
-    virtual void processProgramMessage(const std::string& message) = 0;
+    virtual void processScpiMessage(const std::string& message) = 0;
 };
 
 } // namespace scpi
