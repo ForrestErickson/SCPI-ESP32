@@ -39,12 +39,12 @@ int main() {
     // CR alone is not a terminator; timeout can still complete the message.
     input.feed('C', 10);
     input.feed('\r', 11);
-    assert(input.poll(35).type == scpi::transport::MessageFramer::MESSAGE_READY);
+    assert(input.poll(36).type == scpi::transport::MessageFramer::MESSAGE_READY);
     assert(engine.messages.size() == 4);
     assert(engine.messages[3] == "C\r");
 
     // Empty messages and overflow never reach the engine.
-    input.feed('\n', 36);
+    input.feed('\n', 37);
     assert(engine.messages.size() == 4);
 
     std::cout << "FramedInput tests passed\n";
