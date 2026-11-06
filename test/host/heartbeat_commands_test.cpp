@@ -108,9 +108,9 @@ int main() {
     engine.processScpiMessage("HEART:DUTY 50");
     assert(heartbeat.dutyCyclePercent() == 50);
     assert(led.on);
-    heartbeat.service(8099);
+    heartbeat.service(6099);
     assert(led.on);
-    heartbeat.service(8100);
+    heartbeat.service(6100);
     assert(!led.on);
     engine.processScpiMessage("HEART:DUTY?");
     assert(responses.response == "50");
