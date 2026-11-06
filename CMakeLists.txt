@@ -22,3 +22,7 @@ add_test(NAME message_framer_test COMMAND message_framer_test)
 add_test(NAME framed_input_test COMMAND framed_input_test)
 add_test(NAME error_queue_test COMMAND error_queue_test)
 add_test(NAME command_registry_test COMMAND command_registry_test)
+
+add_executable(parser_test test/host/parser_test.cpp)
+target_include_directories(parser_test PRIVATE src)
+add_test(NAME parser_test COMMAND parser_test)
