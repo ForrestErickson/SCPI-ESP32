@@ -6,7 +6,7 @@
 
 class RecordingEngine : public scpi::EngineInterface {
 public:
-    void processProgramMessage(const std::string& message) override {
+    void processScpiMessage(const std::string& message) override {
         messages.push_back(message);
     }
     std::vector<std::string> messages;
