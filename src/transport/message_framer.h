@@ -10,7 +10,7 @@ namespace transport {
 
 // Converts a byte stream into complete program messages. This class is
 // transport-only: it does not parse SCPI headers, units, or parameters.
-// LF and CRLF terminate messages. A CR not followed by LF is message data.
+// LF and CR each terminate messages; CRLF is accepted as CR followed by an empty LF.
 class MessageFramer {
 public:
     struct Config {
@@ -31,7 +31,7 @@ public:
     enum Terminator {
         NO_TERMINATOR,
         TERMINATED_BY_LF,
-        TERMINATED_BY_CRLF,
+        TERMINATED_BY_CR,
         TERMINATED_BY_TIMEOUT
     };
 
@@ -47,38 +47,20 @@ public:
     };
 
     explicit MessageFramer(const Config& config = Config())
-        : config_(config), last_byte_ms_(0), pending_cr_ms_(0),
-          have_last_byte_time_(false), pending_cr_(false),
-          discarding_overflow_(false) {
+        : config_(config), last_byte_ms_(0),
+          have_last_byte_time_(false), discarding_overflow_(false) {
         buffer_.reserve(config_.max_message_bytes);
     }
 
-    // Supply each received byte and its monotonic millisecond timestamp.
-    // Hold CR briefly so CRLF can be recognized as one terminator. If the
-    // next byte is not LF, the CR is retained as ordinary message data.
+    // CR and LF are each valid message terminators. CRLF is therefore
+    // handled as a CR-terminated message followed by an ignored empty LF.
     Result feed(uint8_t byte, uint32_t now_ms) {
-        if (pending_cr_) {
-            pending_cr_ = false;
-            if (byte == '\n') {
-                return finishMessage(TERMINATED_BY_CRLF);
-            }
-            Result prior = appendDataByte('\r', pending_cr_ms_);
-            Result current = processByte(byte, now_ms);
-            return prior.type != NO_EVENT ? prior : current;
-        }
         return processByte(byte, now_ms);
     }
 
-    // Call after draining currently available input and regularly from the
-    // transport loop. A pending CR becomes data, never a terminator.
+    // Call after draining available input to recognize messages without a
+    // terminator once the configured inactivity interval has elapsed.
     Result poll(uint32_t now_ms) {
-        if (pending_cr_) {
-            pending_cr_ = false;
-            Result prior = appendDataByte('\r', pending_cr_ms_);
-            if (prior.type != NO_EVENT) {
-                return prior;
-            }
-        }
         if (config_.inactivity_timeout_ms == 0 || !have_last_byte_time_) {
             return Result();
         }
@@ -98,7 +80,6 @@ public:
     void reset() {
         buffer_.clear();
         have_last_byte_time_ = false;
-        pending_cr_ = false;
         discarding_overflow_ = false;
     }
 
@@ -108,11 +89,7 @@ private:
             return finishMessage(TERMINATED_BY_LF);
         }
         if (byte == '\r') {
-            pending_cr_ = true;
-            pending_cr_ms_ = now_ms;
-            last_byte_ms_ = now_ms;
-            have_last_byte_time_ = true;
-            return Result();
+            return finishMessage(TERMINATED_BY_CR);
         }
         return appendDataByte(static_cast<char>(byte), now_ms);
     }
@@ -157,9 +134,7 @@ private:
     Config config_;
     std::string buffer_;
     uint32_t last_byte_ms_;
-    uint32_t pending_cr_ms_;
     bool have_last_byte_time_;
-    bool pending_cr_;
     bool discarding_overflow_;
 };
 
