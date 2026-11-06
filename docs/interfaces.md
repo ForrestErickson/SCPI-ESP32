@@ -247,8 +247,9 @@ without moving ESP32 dependencies into the SCPI core:
   compilation to adapt those board settings.
 - Turns the LED on at the beginning of `setup()`, turns it off before setup
   returns, and starts HEARTBEAT on the first execution of `loop()`.
-- Uses USB/UART serial at 115200 baud as the initial transport, with LF or CRLF
-  message termination and a 256-byte maximum input message.
+- Uses USB/UART serial at 115200 baud as the initial transport, with CR, LF, or CRLF
+  message termination, plus a configurable 1,000 ms inactivity timeout for
+  unterminated messages, and a 256-byte maximum input message.
 - Writes query responses as one line terminated by the serial sink.
 
 The example intentionally does not connect to a Wi-Fi access point. Wi-Fi is
