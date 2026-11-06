@@ -182,7 +182,6 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 - How SCPI short/long keyword forms and command-tree path rules are resolved before registry dispatch.
 - Maximum command-token and response sizes (the transport message limit is currently 256 bytes).
-- Period numeric representation, minimum/maximum values, and resolution.
 - Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
 - Confirm the exact ESP32 DevKit V1 board revision and onboard LED polarity; the user reports an ESP32-WROOM module and GPIO 2 LED.
 - The first physical transport and host build/test framework.
@@ -193,8 +192,8 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 2. Define and test the SCPI error queue and response-sink interfaces. **The interfaces and error-queue host test source are now in place; execution remains to be verified in a working build environment.**
 3. Implement the initial parser and SCPI short/long keyword resolution; add host tests. **The first parser slice, registry abbreviation matching, synchronous engine-to-registry dispatch, and initial `*IDN?` common-command support are now in place; broader SCPI syntax remains future work.**
 4. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
-5. Register the HEARTBEAT SCPI command module with the engine.
-6. Test command-to-service behavior and query responses on the host.
+5. Register the HEARTBEAT SCPI command module with the engine. **The command adapter and host test source are now in place; execution remains to be verified in a working build environment.**
+6. Test command-to-service behavior and query responses on the host. **The tests cover state, period, duty cycle, query formatting, and parameter errors; execution remains to be verified.**
 7. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
 
 This order tests each boundary independently before combining them on hardware.
@@ -215,3 +214,19 @@ The initial numeric contract is:
 The active period is captured when HEARTBEAT is enabled. Updating the configured period while enabled does not alter the current run. Disabling and enabling again adopts the newly configured period. A duty-cycle update while enabled restarts the cycle immediately using the active period. The supplied time value makes the implementation deterministic in host tests; elapsed-time subtraction is rollover-safe for the supported period range.
 
 The host test source is `test/host/heartbeat_test.cpp`, registered as `heartbeat_test` in CMake/CTest. It covers default settings, on/off timing, deferred period changes, immediate duty changes, 0% and 100% duty, invalid values, immediate disable, rollover, and avoiding redundant LED writes. These tests have been added but have **not yet been compiled or run**.
+
+
+## 14. Initial HEARTBEAT SCPI command implementation
+
+The command adapter is in `src/scpi/heartbeat_commands.h`. It registers `HEARTbeat:STATe`, `HEARTbeat:PERiod`, and `HEARTbeat:DUTYcycle` with the generic command registry and delegates all timing and LED behavior to `services::Heartbeat`. The application supplies a monotonic millisecond clock through a function pointer and context; this keeps Arduino and ESP32 APIs outside the command module.
+
+The initial command parameter and response rules are:
+
+- `HEARTbeat:STATe ON|OFF` accepts the discrete values ON and OFF, case-insensitively. `HEARTbeat:STATe?` returns `1` when enabled and `0` when disabled.
+- `HEARTbeat:PERiod <seconds>` accepts seconds with 1 ms resolution, from 0.001 through 86400 seconds. Values requiring finer than 1 ms resolution are rejected rather than rounded. `HEARTbeat:PERiod?` returns the configured period in seconds, omitting insignificant trailing zeros.
+- `HEARTbeat:DUTYcycle <percent>` accepts an integer from 0 through 100. `HEARTbeat:DUTYcycle?` returns that integer.
+- Query commands reject parameters with error `-108` (Parameter not allowed).
+- A set command with no parameter reports `-109` (Missing parameter).
+- Malformed numeric values or unsupported period precision report `-128` (Numeric data error); out-of-range period or duty values report `-222` (Data out of range); an unsupported state token reports `-224` (Illegal parameter value).
+
+The module's host test is `test/host/heartbeat_commands_test.cpp`, registered as `heartbeat_commands_test` in CMake/CTest. It verifies command abbreviation dispatch, query responses, setting changes, period activation behavior, duty-cycle restart behavior, boundary values, and error reporting. The test source has been added but has not yet been compiled or executed in this environment.
