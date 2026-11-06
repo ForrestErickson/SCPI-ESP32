@@ -25,22 +25,20 @@ int main() {
     assert(crlf.feed('\r', 11).type == MessageFramer::NO_EVENT);
     expectMessage(crlf.feed('\n', 12), "B", MessageFramer::TERMINATED_BY_CRLF);
 
-    // CR-only is resolved by poll(); a non-LF byte after CR starts next message.
+    // A CR not followed by LF is data, not a message terminator.
     crlf.feed('C', 13);
     crlf.feed('\r', 14);
-    expectMessage(crlf.poll(14), "C", MessageFramer::TERMINATED_BY_CR);
-    crlf.feed('D', 15);
-    expectMessage(crlf.feed('\n', 16), "D", MessageFramer::TERMINATED_BY_LF);
+    assert(crlf.poll(14).type == MessageFramer::NO_EVENT);
+    expectMessage(crlf.feed('\n', 15), "C\r", MessageFramer::TERMINATED_BY_LF);
 
-    // CR compatibility can be disabled; then CR is ordinary message data.
-    MessageFramer no_cr(MessageFramer::Config(32, 0, false));
-    no_cr.feed('E', 1);
-    no_cr.feed('\r', 2);
-    expectMessage(no_cr.feed('\n', 3), std::string("E\r").c_str(),
-                  MessageFramer::TERMINATED_BY_LF);
+    // A non-LF byte after CR remains in the same message.
+    crlf.feed('D', 16);
+    crlf.feed('\r', 17);
+    crlf.feed('E', 18);
+    expectMessage(crlf.feed('\n', 19), "D\rE", MessageFramer::TERMINATED_BY_LF);
 
     // Inactivity timeout and timer rollover.
-    MessageFramer timed(MessageFramer::Config(32, 20, true));
+    MessageFramer timed(MessageFramer::Config(32, 20));
     timed.feed('T', 100);
     assert(timed.poll(119).type == MessageFramer::NO_EVENT);
     expectMessage(timed.poll(120), "T", MessageFramer::TERMINATED_BY_TIMEOUT);
@@ -53,12 +51,12 @@ int main() {
     timed.feed('Y', 215);
     assert(timed.poll(230).type == MessageFramer::NO_EVENT);
     expectMessage(timed.poll(235), "XY", MessageFramer::TERMINATED_BY_TIMEOUT);
-    MessageFramer no_timeout(MessageFramer::Config(32, 0, true));
+    MessageFramer no_timeout(MessageFramer::Config(32, 0));
     no_timeout.feed('N', 1);
     assert(no_timeout.poll(1000).type == MessageFramer::NO_EVENT);
 
     // Overflow is reported once; bytes are discarded through the next boundary.
-    MessageFramer bounded(MessageFramer::Config(3, 0, true));
+    MessageFramer bounded(MessageFramer::Config(3, 0));
     bounded.feed('1', 1); bounded.feed('2', 2); bounded.feed('3', 3);
     assert(bounded.feed('4', 4).type == MessageFramer::MESSAGE_OVERFLOW);
     assert(bounded.feed('5', 5).type == MessageFramer::NO_EVENT);
