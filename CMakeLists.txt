@@ -11,6 +11,10 @@ target_include_directories(message_framer_test PRIVATE src)
 add_executable(framed_input_test test/host/framed_input_test.cpp)
 target_include_directories(framed_input_test PRIVATE src)
 
+add_executable(error_queue_test test/host/error_queue_test.cpp)
+target_include_directories(error_queue_test PRIVATE src)
+
 enable_testing()
 add_test(NAME message_framer_test COMMAND message_framer_test)
 add_test(NAME framed_input_test COMMAND framed_input_test)
+add_test(NAME error_queue_test COMMAND error_queue_test)
