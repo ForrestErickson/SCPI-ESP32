@@ -36,7 +36,7 @@ The engine must not contain GPIO operations, LED behavior, oscilloscope logic, o
 
 ### 3. Parser and command registry
 
-The parser recognizes SCPI message structure and produces a representation that the dispatcher can use. The registry represents command paths and associates them with handlers and metadata.
+The parser recognizes SCPI message structure and produces a representation that the dispatcher can use. The initial registry represents exact command paths and associates them with function-pointer handlers and an optional application context pointer. It performs case-insensitive exact matching only; the parser must resolve SCPI keyword abbreviations and command-tree rules before dispatch.
 
 The implementation should support the selected SCPI subset, including the applicable rules for long and short keyword forms, queries, parameters, and message units. Exact rules and limits are to be established in the standards/compliance work before claiming conformance.
 
@@ -120,7 +120,7 @@ The first milestone is successful when the host tests pass and the hardware exam
 - First transport and message-framing contract.
 - ESP32 chip/board and Arduino framework/toolchain versions.
 - Build system and host-test framework.
-- Command registration and handler API design.
+- Parser representation and integration with the initial command registry; SCPI keyword abbreviation and command-tree resolution.
 - Parser limits, message buffering, and memory strategy.
 - HEARTBEAT startup defaults, valid period range, and numeric precision.
 - Whether GPIO selection is compile-time/board configuration only or also runtime configurable.
