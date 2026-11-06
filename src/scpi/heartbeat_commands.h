@@ -170,7 +170,7 @@ private:
         }
         bool enabled = false;
         if (!parseOnOff(parameter, enabled)) {
-            errors.push(-128, "Numeric data error");
+            errors.push(-224, "Illegal parameter value");
             return;
         }
         self->heartbeat_.setEnabled(enabled, self->now_function_(self->clock_context_));
