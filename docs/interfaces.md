@@ -115,7 +115,7 @@ The service must not call delay() or otherwise wait for a blink transition. It c
 - Changing the period while HEARTBEAT is enabled does not change the period of the cycle already in progress or subsequent cycles in that uninterrupted run; it is applied when HEARTBEAT is next enabled.
 - For intermediate duty cycles, the on interval begins at the start of each cycle.
 
-The valid positive period range, resolution, and numeric representation still need to be selected. Invalid values must be rejected without silently changing the active configuration.
+The initial implementation represents periods as unsigned milliseconds, with a 1 ms resolution and a permitted range of 1 ms through 24 hours (86,400,000 ms). The configured period is reported by `periodMilliseconds()`; the active period is held internally for the current uninterrupted run. Invalid values are rejected without changing the previous configuration.
 
 ## 6. Logical LED output and board adapter
 
@@ -198,3 +198,20 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 7. Add the selected board's GPIO adapter and integrate the service into the Arduino main loop.
 
 This order tests each boundary independently before combining them on hardware.
+
+
+## 13. Initial HEARTBEAT service implementation
+
+The first implementation is in `src/services/heartbeat.h`. It has no Arduino or ESP32 dependencies. The application supplies time in unsigned milliseconds and implements `services::LogicalLedOutput`; the service calls that interface only when the logical LED state changes.
+
+The initial numeric contract is:
+- Period unit: milliseconds, unsigned 32-bit value.
+- Resolution: 1 ms.
+- Accepted period range: 1 ms through 86,400,000 ms (24 hours).
+- Default period: 2,000 ms.
+- Duty cycle: integer percentage from 0 through 100.
+- Default duty cycle: 25%.
+
+The active period is captured when HEARTBEAT is enabled. Updating the configured period while enabled does not alter the current run. Disabling and enabling again adopts the newly configured period. A duty-cycle update while enabled restarts the cycle immediately using the active period. The supplied time value makes the implementation deterministic in host tests; elapsed-time subtraction is rollover-safe for the supported period range.
+
+The host test source is `test/host/heartbeat_test.cpp`, registered as `heartbeat_test` in CMake/CTest. It covers default settings, on/off timing, deferred period changes, immediate duty changes, 0% and 100% duty, invalid values, immediate disable, rollover, and avoiding redundant LED writes. These tests have been added but have **not yet been compiled or run**.
