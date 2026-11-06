@@ -230,3 +230,34 @@ The initial command parameter and response rules are:
 - Malformed numeric values or unsupported period precision report `-128` (Numeric data error); out-of-range period or duty values report `-222` (Data out of range); an unsupported state token reports `-224` (Illegal parameter value).
 
 The module's host test is `test/host/heartbeat_commands_test.cpp`, registered as `heartbeat_commands_test` in CMake/CTest. It verifies command abbreviation dispatch, query responses, setting changes, period activation behavior, duty-cycle restart behavior, boundary values, and error reporting. The test source has been added but has not yet been compiled or executed in this environment.
+
+
+## 15. Initial ESP32 Arduino example
+
+A first hardware integration sketch is provided at
+`examples/esp32_scpi/esp32_scpi.ino`. It demonstrates the application wiring
+without moving ESP32 dependencies into the SCPI core:
+
+- Uses the Arduino-ESP32 `WiFi` API to read the station MAC address and supplies
+  it as the serial-number field in `*IDN?`.
+- Uses `! Amused Scientist` as the manufacturer placeholder and
+  `SCPI-ESP32` as the model.
+- Uses GPIO 2 as the default status LED pin and assumes active-high wiring.
+  Define `SCPI_STATUS_LED_PIN` or `SCPI_STATUS_LED_ACTIVE_HIGH` before
+  compilation to adapt those board settings.
+- Turns the LED on at the beginning of `setup()`, turns it off before setup
+  returns, and starts HEARTBEAT on the first execution of `loop()`.
+- Uses USB/UART serial at 115200 baud as the initial transport, with LF or CRLF
+  message termination and a 256-byte maximum input message.
+- Writes query responses as one line terminated by the serial sink.
+
+The example intentionally does not connect to a Wi-Fi access point. Wi-Fi is
+placed in station mode to obtain the station MAC address; no network SCPI
+transport is implemented yet.
+
+With a compatible ESP32 Arduino board selected, open the sketch in the Arduino
+IDE (or copy it into an Arduino sketch folder named `esp32_scpi`) and add the
+repository's `src` directory to the compiler include path. The sketch has not
+yet been cross-compiled or run on a physical ESP32. The first hardware test
+should verify setup LED behavior, the heartbeat cadence, and the response to
+`*IDN?\n` before exercising the remaining HEARTBEAT commands.
