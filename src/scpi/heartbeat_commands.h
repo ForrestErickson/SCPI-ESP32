@@ -2,6 +2,7 @@
 #define SCPI_ESP32_SCPI_HEARTBEAT_COMMANDS_H
 
 #include <cerrno>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
