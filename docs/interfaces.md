@@ -185,7 +185,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 
 1. Implement and host-test the message framer and the engine entry-point/transport bridge. **The code and host test sources are now in place; execution remains to be verified in a working build environment.**
 2. Define and test the SCPI error queue and response-sink interfaces. **The interfaces and error-queue host test source are now in place; execution remains to be verified in a working build environment.**
-3. Implement the initial parser and SCPI short/long keyword resolution; add host tests. **The first parser slice and registry abbreviation matching are now in place; engine integration and broader SCPI syntax remain future work.**
+3. Implement the initial parser and SCPI short/long keyword resolution; add host tests. **The first parser slice, registry abbreviation matching, and synchronous engine-to-registry dispatch are now in place; broader SCPI syntax remains future work.**
 4. Implement the HEARTBEAT service against a fake clock and fake logical LED output.
 5. Register the HEARTBEAT SCPI command module with the engine.
 6. Test command-to-service behavior and query responses on the host.
