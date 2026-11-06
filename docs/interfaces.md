@@ -71,14 +71,14 @@ Startup behavior is also defined:
 
 The setup indication and HEARTBEAT both use the logical LED output interface. The board adapter remains responsible for translating logical ON/OFF into the correct GPIO voltage for the selected LED wiring.
 
-When the duty cycle is changed while HEARTBEAT is running, the timing cycle restarts immediately using the new duty cycle. The LED is logically ON at the start of that new cycle (unless the new duty cycle is 0%).
+When the duty cycle is changed while HEARTBEAT is running, the timing cycle restarts immediately using the new duty cycle and the currently active period. The LED is logically ON at the start of that new cycle (unless the new duty cycle is 0%). A period change, by contrast, changes the configured period but does not alter the active cycle; the new period becomes active the next time HEARTBEAT is enabled.
 
 ### Conceptual operations
 
 The service needs equivalents of:
 
 - Set/get enabled state.
-- Set/get period.
+- Set/get configured period and, as appropriate, active period.
 - Set/get duty cycle.
 - A service operation such as service(now), called frequently by the application loop, which updates the logical LED output only when needed and returns promptly.
 
@@ -94,10 +94,11 @@ The service must not call delay() or otherwise wait for a blink transition. It c
 - At 100% duty cycle, the logical output remains on while heartbeat is enabled.
 - When heartbeat is disabled, the logical output is off immediately.
 - Disabling HEARTBEAT interrupts the current cycle; it does not wait for the cycle to finish. This provides an immediate way to regain control even if a very long period has been configured.
-- Enabling HEARTBEAT starts a fresh cycle.
+- Enabling HEARTBEAT starts a fresh cycle using the currently configured period and duty cycle. This is when a newly configured period takes effect.
+- Changing the period while HEARTBEAT is enabled does not change the period of the cycle already in progress or subsequent cycles in that uninterrupted run; it is applied when HEARTBEAT is next enabled.
 - For intermediate duty cycles, the on interval begins at the start of each cycle.
 
-The valid positive period range, resolution, and numeric representation still need to be selected. Invalid values must be rejected without silently changing the active configuration. The precise effect of changing the period during an active cycle remains to be decided.
+The valid positive period range, resolution, and numeric representation still need to be selected. Invalid values must be rejected without silently changing the active configuration.
 
 ## 5. Logical LED output and board adapter
 
@@ -119,12 +120,12 @@ The agreed initial command family is:
 
 | Command | Meaning |
 |---|---|
-| HEARTbeat:STATe ON | Enable heartbeat and begin a fresh cycle |
+| HEARTbeat:STATe ON | Enable heartbeat and begin a fresh cycle using current settings |
 | HEARTbeat:STATe OFF | Immediately interrupt heartbeat and turn logical LED output off |
 | HEARTbeat:STATe? | Query enabled state |
-| HEARTbeat:PERiod <seconds> | Set complete blink period in seconds |
-| HEARTbeat:PERiod? | Query period |
-| HEARTbeat:DUTYcycle <percent> | Set duty cycle from 0 through 100 |
+| HEARTbeat:PERiod <seconds> | Set configured complete blink period in seconds; takes effect on next enable |
+| HEARTbeat:PERiod? | Query configured period |
+| HEARTbeat:DUTYcycle <percent> | Set duty cycle from 0 through 100; while enabled, immediately restart the cycle using the new duty cycle |
 | HEARTbeat:DUTYcycle? | Query duty cycle |
 
 These are project command-name decisions, subject to verification of SCPI spelling, short/long forms, and syntax against the selected SCPI specification and supported subset.
@@ -138,7 +139,7 @@ The application owns the objects and connects the boundaries. Conceptually, its 
 1. At the beginning of `setup()`, initialize the LED output sufficiently to command logical ON, then turn it ON.
 2. Perform the remaining setup work while the LED remains ON.
 3. Turn the LED OFF immediately before `setup()` returns.
-4. At the start of the first `loop()` execution, enable HEARTBEAT, beginning a fresh cycle.
+4. At the start of the first `loop()` execution, enable HEARTBEAT, beginning a fresh cycle using the currently configured period and duty cycle.
 5. On each loop iteration, service/read available transport input and submit complete messages to the SCPI engine, then call the HEARTBEAT service with the current monotonic time, and continue with other application work.
 
 The exact order of the recurring loop operations may be adjusted, but neither the engine nor the HEARTBEAT service should block waiting for I/O or time to pass. A long-running handler elsewhere in the application can still delay heartbeat servicing; the heartbeat therefore indicates that the loop is being serviced, not that every subsystem is healthy.
@@ -152,7 +153,7 @@ The first host test build should substitute fakes for hardware and transport:
 - Fake clock advances time under test control.
 - Fake LED output records logical ON/OFF changes.
 
-Tests should verify the setup LED sequence (ON at setup start, OFF at setup completion), HEARTBEAT starting when loop execution begins, command registration and dispatch; state, period, and duty-cycle queries; valid and invalid parameter handling; disabled state immediately producing logical OFF even in the middle of a cycle; enabling starting a fresh cycle; 0% and 100% duty-cycle behavior; intermediate duty-cycle timing and period boundaries; no early output transition; prompt return without waiting; and timer rollover behavior.
+Tests should verify the setup LED sequence (ON at setup start, OFF at setup completion), HEARTBEAT starting when loop execution begins, command registration and dispatch; state, configured-period, and duty-cycle queries; valid and invalid parameter handling; disabled state immediately producing logical OFF even in the middle of a cycle; enabling starting a fresh cycle with the latest configured period and duty cycle; a period change not altering an active run; duty-cycle changes immediately restarting the active cycle; 0% and 100% duty-cycle behavior; intermediate duty-cycle timing and period boundaries; no early output transition; prompt return without waiting; and timer rollover behavior.
 
 The same HEARTBEAT service logic should be used in host tests and in the ESP32 application; only the clock and LED output adapters should differ.
 
@@ -163,7 +164,7 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - How response writing and error reporting are exposed to handlers.
 - Maximum command/message and response sizes.
 - Period numeric representation, minimum/maximum values, and resolution.
-- Whether changing the period restarts the current cycle or takes effect relative to the existing cycle (the duty-cycle change behavior is decided: restart immediately).
+- Whether period queries report the configured period (the value that will be used on the next enable) or also expose a separate active-period query while enabled.
 - The first ESP32 board and its actual onboard LED pin/polarity.
 - The first physical transport and host build/test framework.
 
