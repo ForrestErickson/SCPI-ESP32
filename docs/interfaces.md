@@ -42,7 +42,11 @@ The initial `scpi::CommandRegistry` stores registered long-form command paths an
 
 The initial `scpi::Parser` separates one command header, an optional query marker, and the remaining parameter text. It trims surrounding whitespace and rejects malformed headers. It intentionally does not parse parameter grammar. The first slice accepts one command unit per message; it supports subsystem commands and the common command `*IDN?`, but not semicolon-separated units or the broader common-command set. Command-tree defaults and full SCPI syntax remain future work; do not treat this subset as a complete SCPI implementation. The function-pointer/context design avoids requiring `std::function` and permits one handler implementation to serve an application object without coupling the engine to that object's type.
 
-## 3. Parser and command registry\n\nThe parser currently recognizes one subsystem command unit per message. It separates the command header from parameter text at the first whitespace, recognizes a trailing query marker, and rejects malformed headers. It does not yet interpret parameter values. The registry resolves each colon-separated keyword using the mandatory uppercase prefix and optional lowercase suffix shown in the registered long form. This is a deliberately limited first subset: additional common commands, semicolon-separated command units, command-tree defaults, and detailed parameter grammar remain to be implemented.\n\n## 4. Transport boundary
+## 3. Parser and command registry
+
+The parser recognizes one command unit per message. It supports subsystem command headers and the initial common command `*IDN?`, separates the header from parameter text at the first whitespace, recognizes a trailing query marker, and rejects malformed headers. It does not yet interpret parameter values. The registry resolves subsystem keywords using the mandatory uppercase prefix and optional lowercase suffix shown in the registered long form. The `*IDN` common command is registered as an exact command name. Semicolon-separated command units, command-tree defaults, and detailed parameter grammar remain future work.
+
+## 4. Transport boundary
 
 A transport moves bytes and determines when a complete message is ready. The transport/application boundary supplies complete messages to the engine and carries engine responses back to the controller.
 
@@ -125,7 +129,11 @@ The pin and polarity are board/application configuration. They are not generic S
 
 A small abstract output interface allows host tests to substitute a fake LED and record logical state changes without physical hardware.
 
-## 7. Identification common command\n\nThe reusable `scpi::Identification` helper registers the common query `*IDN?`. The application supplies the four response fields: manufacturer, model, serial number, and firmware revision. The handler returns them in that order, separated by commas. The fields must not contain commas because this initial implementation does not implement quoted-field escaping. The `Identification` object must remain alive for as long as the registry may dispatch its handler. The helper does not invent device-specific identity values; the application owns them. `*IDN` without the query marker, or `*IDN?` with parameters, reports error `-108` (Parameter not allowed). This is an initial common-command subset, not a claim of complete IEEE 488.2 support.\n\n## 8. HEARTBEAT SCPI command module
+## 7. Identification common command
+
+The reusable `scpi::Identification` helper registers the common query `*IDN?`. The application supplies the four response fields: manufacturer, model, serial number, and firmware revision. The handler returns them in that order, separated by commas. For the ESP32 application, the serial-number field will be populated from the device Wi-Fi station MAC address (for example, through the Arduino-ESP32 Wi-Fi API) in six-octet hexadecimal form. This keeps Wi-Fi and board dependencies out of the generic SCPI engine. The firmware revision is supplied by application build/version configuration. Fields must not contain commas because this initial implementation does not implement quoted-field escaping. The `Identification` object must remain alive while the registry may dispatch its handler. `*IDN` without the query marker, or `*IDN?` with parameters, reports error `-108` (Parameter not allowed). This is an initial common-command subset, not a claim of complete IEEE 488.2 support.
+
+## 8. HEARTBEAT SCPI command module
 
 The command module connects the generic engine to the HEARTBEAT service. It registers handlers and translates SCPI parameters into service operations.
 
