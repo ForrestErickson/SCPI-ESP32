@@ -6,12 +6,13 @@ This document defines the responsibilities and boundaries for the first host-tes
 
 ## 1. Overall flow
 
-1. A transport receives bytes and identifies complete SCPI program messages according to its framing rules.
-2. The application passes each complete message to the SCPI engine.
-3. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler.
-4. A handler may update application-service settings or return query data.
-5. The engine sends responses through an output/response interface.
-6. The application's main loop regularly services both the SCPI input path and the HEARTBEAT service.
+1. At the beginning of application setup, the application turns the status LED logically ON as a visible setup indicator.
+2. Setup performs hardware and application initialization.
+3. Immediately before setup finishes, the application turns the status LED logically OFF.
+4. When the main loop begins running, the application enables and begins servicing HEARTBEAT.
+5. The application main loop regularly services both the SCPI input path and the HEARTBEAT service.
+
+The transport receives bytes and identifies complete SCPI program messages according to its framing rules. The application passes each complete message to the SCPI engine. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler. A handler may update application-service settings or return query data. The engine sends responses through an output/response interface.
 
 The engine does not operate GPIO. The HEARTBEAT service does not parse SCPI. The GPIO adapter does not know SCPI command names.
 
@@ -52,7 +53,7 @@ The HEARTBEAT service owns whether heartbeat operation is enabled, the configure
 
 It does not own SCPI parsing or command registration, a GPIO number or electrical polarity, Arduino pin APIs, or blocking delays.
 
-### Initial operating settings
+### Initial operating settings and startup behavior
 
 The agreed initial HEARTBEAT settings are:
 
@@ -61,7 +62,16 @@ The agreed initial HEARTBEAT settings are:
 
 With these settings, the logical LED is on for 0.5 seconds and off for 1.5 seconds in each 2-second cycle, while heartbeat is enabled.
 
-The startup enabled/disabled state and the behavior when period or duty cycle is changed during operation remain open decisions.
+Startup behavior is also defined:
+
+- At the beginning of `setup()`, the application commands the status LED logically ON. This provides a visible indication that setup has started and is executing.
+- The LED remains logically ON during setup.
+- Immediately before `setup()` returns, the application commands the status LED logically OFF.
+- HEARTBEAT is not started during setup. It is enabled when the application begins executing `loop()`, and is then serviced regularly by the main loop.
+
+The setup indication and HEARTBEAT both use the logical LED output interface. The board adapter remains responsible for translating logical ON/OFF into the correct GPIO voltage for the selected LED wiring.
+
+The behavior when period or duty cycle is changed during operation remains an open decision.
 
 ### Conceptual operations
 
@@ -78,7 +88,7 @@ The service must not call delay() or otherwise wait for a blink transition. It c
 
 ### Timing semantics
 
-- Period is the duration of one complete on/off cycle, in seconds.
+- Period is the duration of one complete on/off cycle.
 - Duty cycle is the fraction of that period for which the LED is logically on.
 - At 0% duty cycle, the logical output remains off.
 - At 100% duty cycle, the logical output remains on while heartbeat is enabled.
@@ -97,7 +107,7 @@ For an active-high LED, logical ON generally maps to a high output. For an activ
 
 The pin and polarity are board/application configuration. They are not generic SCPI engine settings, and they are not required HEARTBEAT SCPI commands.
 
-A small abstract output interface allows host tests to substitute a fake LED and record state changes without physical hardware.
+A small abstract output interface allows host tests to substitute a fake LED and record logical state changes without physical hardware.
 
 ## 6. HEARTBEAT SCPI command module
 
@@ -121,13 +131,15 @@ The command module validates values and reports invalid settings through the gen
 
 ## 7. Application main-loop integration
 
-The application owns the objects and connects the boundaries. Conceptually, its loop does the following:
+The application owns the objects and connects the boundaries. Conceptually, its lifecycle is:
 
-1. Service/read available transport input and submit complete messages to the SCPI engine.
-2. Call the HEARTBEAT service with the current monotonic time.
-3. Continue with other application work.
+1. At the beginning of `setup()`, initialize the LED output sufficiently to command logical ON, then turn it ON.
+2. Perform the remaining setup work while the LED remains ON.
+3. Turn the LED OFF immediately before `setup()` returns.
+4. At the start of the first `loop()` execution, enable HEARTBEAT.
+5. On each loop iteration, service/read available transport input and submit complete messages to the SCPI engine, then call the HEARTBEAT service with the current monotonic time, and continue with other application work.
 
-The exact order may be adjusted, but neither the engine nor the HEARTBEAT service should block waiting for I/O or time to pass. A long-running handler elsewhere in the application can still delay heartbeat servicing; the heartbeat therefore indicates that the loop is being serviced, not that every subsystem is healthy.
+The exact order of the recurring loop operations may be adjusted, but neither the engine nor the HEARTBEAT service should block waiting for I/O or time to pass. A long-running handler elsewhere in the application can still delay heartbeat servicing; the heartbeat therefore indicates that the loop is being serviced, not that every subsystem is healthy.
 
 ## 8. Host-test strategy
 
@@ -138,7 +150,7 @@ The first host test build should substitute fakes for hardware and transport:
 - Fake clock advances time under test control.
 - Fake LED output records logical ON/OFF changes.
 
-Tests should verify command registration and dispatch; state, period, and duty-cycle queries; valid and invalid parameter handling; disabled state producing logical OFF; 0% and 100% duty-cycle behavior; intermediate duty-cycle timing and period boundaries; no early output transition; prompt return without waiting; and timer rollover behavior.
+Tests should verify the setup LED sequence (ON at setup start, OFF at setup completion), HEARTBEAT starting when loop execution begins, command registration and dispatch; state, period, and duty-cycle queries; valid and invalid parameter handling; disabled state producing logical OFF; 0% and 100% duty-cycle behavior; intermediate duty-cycle timing and period boundaries; no early output transition; prompt return without waiting; and timer rollover behavior.
 
 The same HEARTBEAT service logic should be used in host tests and in the ESP32 application; only the clock and LED output adapters should differ.
 
@@ -149,7 +161,6 @@ The same HEARTBEAT service logic should be used in host tests and in the ESP32 a
 - How response writing and error reporting are exposed to handlers.
 - Maximum command/message and response sizes.
 - Period numeric representation, minimum/maximum values, and resolution.
-- Startup enabled/disabled state.
 - Whether a period or duty-cycle change restarts the current cycle or takes effect relative to the existing cycle.
 - The first ESP32 board and its actual onboard LED pin/polarity.
 - The first physical transport and host build/test framework.
