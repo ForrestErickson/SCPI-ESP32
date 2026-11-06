@@ -1,6 +1,6 @@
 # Initial Software Interface Proposal
 
-**Status:** Proposal for review; not an implementation contract yet.
+**Status:** Initial implementation contract. The message-framing component, engine entry-point interface, and framed-input adapter are implemented and host-test sources are provided; the parser and dispatcher remain future work.
 
 This document defines the responsibilities and boundaries for the first host-testable SCPI-ESP32 vertical slice. It deliberately avoids choosing a final callback mechanism, class hierarchy, or build system.
 
@@ -12,7 +12,7 @@ This document defines the responsibilities and boundaries for the first host-tes
 4. When the main loop begins running, the application enables and begins servicing HEARTBEAT.
 5. The application main loop regularly services both the SCPI input path and the HEARTBEAT service.
 
-The transport receives bytes and identifies complete SCPI program messages according to its framing rules. The application passes each complete message to the SCPI engine. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler. A handler may update application-service settings or return query data. The engine sends responses through an output/response interface.
+The transport receives bytes and identifies complete SCPI program messages according to the framing rules below. `transport::FramedInput` forwards each complete message through the transport-independent `scpi::EngineInterface::processProgramMessage()` entry point. The engine parses the message, resolves the command, validates syntax and parameters, and invokes the registered handler. A handler may update application-service settings or return query data. The engine sends responses through an output/response interface.
 
 The engine does not operate GPIO. The HEARTBEAT service does not parse SCPI. The GPIO adapter does not know SCPI command names.
 
@@ -41,7 +41,7 @@ A command handler should receive only the parsed request context and the applica
 
 A transport moves bytes and determines when a complete message is ready. The transport/application boundary supplies complete messages to the engine and carries engine responses back to the controller.
 
-A single serial read or TCP read is not necessarily one complete SCPI message. TCP is a byte stream; message boundaries must be established using the selected SCPI termination/framing rules.
+A single serial read or TCP read is not necessarily one complete SCPI message. TCP is a byte stream; message boundaries are established by `transport::MessageFramer` using these project rules:\n\n- LF terminates a message.\n- CRLF terminates a message and is treated as one terminator.\n- CR alone does not terminate a message; a CR not followed by LF is retained as message data.\n- An optional inactivity timeout can terminate a message when no terminator is sent; it is disabled by default.\n- Empty messages are not dispatched. Oversized messages are reported and discarded through the next boundary.\n\nThe current default maximum message size is 256 bytes.
 
 For the first host tests, a mock transport or direct message feeder is sufficient. The initial physical transport can be selected later.
 
