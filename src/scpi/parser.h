@@ -8,9 +8,9 @@
 
 namespace scpi {
 
-// Initial parser scope: one subsystem command unit per program message.
-// Common commands (*IDN?, etc.) and semicolon-separated units are not yet
-// supported. Parameter grammar is intentionally left to command handlers.
+// Initial parser scope: one command unit per program message. It accepts
+// subsystem commands and the common-command form (*IDN?). Semicolon-separated
+// units are not yet supported. Parameter grammar is left to command handlers.
 enum class ParseResult {
     Ok,
     EmptyMessage,
@@ -71,6 +71,17 @@ private:
     }
 
     static bool validHeader(const std::string& header) {
+        // IEEE 488.2 common commands begin with '*' and have no colon path.
+        // This first slice accepts an asterisk followed by alphanumeric text.
+        if (header[0] == '*') {
+            if (header.size() < 2) return false;
+            for (std::string::size_type i = 1; i < header.size(); ++i) {
+                const unsigned char ch = static_cast<unsigned char>(header[i]);
+                if (!std::isalnum(ch)) return false;
+            }
+            return true;
+        }
+
         if (header[0] == ':' || header[header.size() - 1] == ':') {
             return false;
         }
