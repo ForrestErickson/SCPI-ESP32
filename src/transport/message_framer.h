@@ -10,7 +10,7 @@ namespace transport {
 
 // Converts a byte stream into complete program messages. This class is
 // transport-only: it does not parse SCPI headers, units, or parameters.
-// LF and CR each terminate messages; CRLF is accepted as CR followed by an empty LF.
+// LF and CR each terminate messages; CRLF is treated as one terminator.
 class MessageFramer {
 public:
     struct Config {
@@ -48,13 +48,19 @@ public:
 
     explicit MessageFramer(const Config& config = Config())
         : config_(config), last_byte_ms_(0),
-          have_last_byte_time_(false), discarding_overflow_(false) {
+          have_last_byte_time_(false), discarding_overflow_(false),
+          previous_byte_was_cr_(false), empty_message_count_(0) {
         buffer_.reserve(config_.max_message_bytes);
     }
 
-    // CR and LF are each valid message terminators. CRLF is therefore
-    // handled as a CR-terminated message followed by an ignored empty LF.
+    // Empty terminated messages are counted but never dispatched.
+    // The LF half of CRLF is suppressed so CRLF counts as one boundary.
     Result feed(uint8_t byte, uint32_t now_ms) {
+        if (byte == '\n' && previous_byte_was_cr_) {
+            previous_byte_was_cr_ = false;
+            return Result();
+        }
+        previous_byte_was_cr_ = (byte == '\r');
         return processByte(byte, now_ms);
     }
 
@@ -77,10 +83,18 @@ public:
         return finishMessage(TERMINATED_BY_TIMEOUT);
     }
 
+    // Reset framing state without erasing lifetime diagnostics.
     void reset() {
         buffer_.clear();
         have_last_byte_time_ = false;
         discarding_overflow_ = false;
+        previous_byte_was_cr_ = false;
+    }
+
+    // Saturating count of empty CR- or LF-terminated messages since
+    // construction (or device reset). CRLF contributes one boundary.
+    uint32_t emptyMessageCount() const {
+        return empty_message_count_;
     }
 
 private:
@@ -122,7 +136,10 @@ private:
         }
         if (buffer_.empty()) {
             have_last_byte_time_ = false;
-            return Result(); // Empty messages are deliberately not dispatched.
+            if (empty_message_count_ != UINT32_MAX) {
+                ++empty_message_count_;
+            }
+            return Result();
         }
         std::string completed;
         completed.swap(buffer_);
@@ -136,6 +153,8 @@ private:
     uint32_t last_byte_ms_;
     bool have_last_byte_time_;
     bool discarding_overflow_;
+    bool previous_byte_was_cr_;
+    uint32_t empty_message_count_;
 };
 
 } // namespace transport
