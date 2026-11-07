@@ -95,8 +95,10 @@ int main() {
     assert(led.on);
     engine.processScpiMessage("HEART:PER 8");
     assert(heartbeat.periodMilliseconds() == 8000);
-    heartbeat.service(3000);
+    heartbeat.service(2999); // 25% of the active 4 s period is still ON
     assert(led.on);
+    heartbeat.service(3000); // exactly 1 s elapsed: the ON interval ends
+    assert(!led.on);
     engine.processScpiMessage("HEART:STAT OFF");
     assert(!led.on);
 
