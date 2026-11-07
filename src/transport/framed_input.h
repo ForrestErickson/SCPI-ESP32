@@ -9,8 +9,7 @@ namespace scpi {
 namespace transport {
 
 // Connects a byte-stream framer to the transport-independent SCPI engine.
-// The transport calls feed() for received bytes and poll() after draining
-// available input. Only complete, non-empty messages reach the engine.
+// Only complete, non-empty messages reach the engine.
 class FramedInput {
 public:
     FramedInput(EngineInterface& engine,
@@ -27,6 +26,10 @@ public:
 
     void reset() {
         framer_.reset();
+    }
+
+    uint32_t emptyMessageCount() const {
+        return framer_.emptyMessageCount();
     }
 
 private:
