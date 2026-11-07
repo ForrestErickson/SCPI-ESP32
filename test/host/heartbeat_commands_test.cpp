@@ -103,6 +103,8 @@ int main() {
     assert(!led.on);
 
     // Duty changes while enabled restart the current cycle immediately.
+    // The prior PERIOD 8 command remains configured; re-enabling above adopts
+    // that 8 s period, so 50% duty means 4 s ON from the 4100 ms restart.
     clock.now = 4000;
     engine.processScpiMessage("HEART:STAT ON");
     assert(led.on);
@@ -113,6 +115,10 @@ int main() {
     heartbeat.service(6099);
     assert(led.on);
     heartbeat.service(6100);
+    assert(led.on);
+    heartbeat.service(8099);
+    assert(led.on);
+    heartbeat.service(8100);
     assert(!led.on);
     engine.processScpiMessage("HEART:DUTY?");
     assert(responses.response == "50");
