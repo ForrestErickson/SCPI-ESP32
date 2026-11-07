@@ -13,29 +13,40 @@ static void expectMessage(const MessageFramer::Result& r, const char* expected,
 }
 
 int main() {
-    // LF terminates; empty and repeated terminators do not dispatch.
+    // LF terminates; a standalone empty LF is counted, not dispatched.
     MessageFramer lf;
     assert(lf.feed('A', 1).type == MessageFramer::NO_EVENT);
     expectMessage(lf.feed('\n', 2), "A", MessageFramer::TERMINATED_BY_LF);
     assert(lf.feed('\n', 3).type == MessageFramer::NO_EVENT);
+    assert(lf.emptyMessageCount() == 1);
+    assert(lf.feed('\n', 4).type == MessageFramer::NO_EVENT);
+    assert(lf.emptyMessageCount() == 2);
 
-    // Standalone CR terminates a message.
+    // Standalone CR terminates; an empty CR is counted.
     MessageFramer cr;
     cr.feed('B', 10);
     expectMessage(cr.feed('\r', 11), "B", MessageFramer::TERMINATED_BY_CR);
+    cr.feed('\r', 12);
+    assert(cr.emptyMessageCount() == 1);
 
-    // CRLF is accepted: CR completes the message and the following LF is
-    // an empty boundary, which is ignored.
+    // CRLF is one boundary, including when it terminates an empty message.
     MessageFramer crlf;
     crlf.feed('C', 13);
     expectMessage(crlf.feed('\r', 14), "C", MessageFramer::TERMINATED_BY_CR);
     assert(crlf.feed('\n', 15).type == MessageFramer::NO_EVENT);
+    assert(crlf.emptyMessageCount() == 0);
+    crlf.feed('\r', 16);
+    crlf.feed('\n', 17);
+    assert(crlf.emptyMessageCount() == 1);
 
-    // A byte after CR begins the next message.
-    crlf.feed('D', 16);
-    expectMessage(crlf.feed('\r', 17), "D", MessageFramer::TERMINATED_BY_CR);
-    crlf.feed('E', 18);
-    expectMessage(crlf.feed('\n', 19), "E", MessageFramer::TERMINATED_BY_LF);
+    // A byte after CR begins the next message; CR CR counts one empty line.
+    crlf.feed('D', 18);
+    expectMessage(crlf.feed('\r', 19), "D", MessageFramer::TERMINATED_BY_CR);
+    crlf.feed('\r', 20);
+    crlf.feed('\r', 21);
+    assert(crlf.emptyMessageCount() == 3);
+    crlf.feed('E', 22);
+    expectMessage(crlf.feed('\n', 23), "E", MessageFramer::TERMINATED_BY_LF);
 
     // Inactivity timeout and timer rollover.
     MessageFramer timed(MessageFramer::Config(32, 20));
