@@ -21,18 +21,18 @@ int main() {
     input.feed('S', 1);
     input.feed('Y', 2);
     input.feed('S', 3);
-    input.feed('\\r', 4);
+    input.feed('\r', 4);
     assert(engine.messages.size() == 1);
     assert(engine.messages[0] == "SYS");
-    input.feed('\\n', 5);
+    input.feed('\n', 5);
     assert(engine.messages.size() == 1);
 
     // LF and CR each terminate independent messages.
     input.feed('A', 6);
-    input.feed('\\n', 7);
+    input.feed('\n', 7);
     input.feed('B', 8);
-    input.feed('\\r', 9);
-    input.feed('\\n', 10);
+    input.feed('\r', 9);
+    input.feed('\n', 10);
     assert(engine.messages.size() == 3);
     assert(engine.messages[1] == "A");
     assert(engine.messages[2] == "B");
@@ -47,11 +47,11 @@ int main() {
     assert(engine.messages[3] == "CD");
 
     // Empty terminators are deliberately not dispatched.
-    input.feed('\\n', 38);
-    input.feed('\\r', 39);
-    input.feed('\\n', 40);
+    input.feed('\n', 38);
+    input.feed('\r', 39);
+    input.feed('\n', 40);
     assert(engine.messages.size() == 4);
 
-    std::cout << "FramedInput tests passed\\n";
+    std::cout << "FramedInput tests passed\n";
     return 0;
 }
